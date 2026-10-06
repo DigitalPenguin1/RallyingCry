@@ -17,6 +17,15 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 
 Each incoming alert shows up in chat and as a raid-warning banner, with a sound. If your target is an enemy player when you send, their name rides along.
 
+## Accept or Decline
+
+Ganked!, World PvP, and Hunt Ganker alerts pop up a window for guildmates with **Accept** and **Decline**.
+
+- **Accept** puts a waypoint on the alert and tells the person who sent it. Their client invites you automatically, so they don't have to stop fighting to do it. If their party is full and they lead it, it turns into a raid first.
+- **Decline** closes the window. Nothing gets sent.
+
+The window closes on its own after 60 seconds, or when the sender calls All Clear. If you're already in a group you can't be invited, but the sender still hears you're on the way. If they can't invite you (they aren't group leader, or the raid is full), you get told why and can follow the waypoint.
+
 ## Features
 
 - **Button panel**: draggable, one click per alert. Works in combat. `/rc panel` to show or hide
@@ -39,6 +48,9 @@ Each incoming alert shows up in chat and as a raid-warning banner, with a sound.
 /rc sound               toggle alert sound
 /rc banner              toggle the screen banner
 /rc waypoint            toggle auto-waypoint
+/rc popup               toggle the Accept/Decline window
+/rc invite              toggle auto-inviting guildmates who accept
+/rc raid                toggle turning a full party into a raid
 /rc mute <type>         silence gank, wpvp, hunt, or clear
 /rc version             addon and protocol version
 /rc debug               debug output

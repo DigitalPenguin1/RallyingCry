@@ -22,7 +22,7 @@ local function FormatCoords(alert)
     end
 end
 
-local function FormatLocation(alert)
+function RC.FormatLocation(alert)
     local place = alert.zone
     if alert.subzone then
         place = alert.subzone .. ", " .. place
@@ -34,11 +34,11 @@ local function FormatLocation(alert)
     return place
 end
 
-local function FormatAlert(alert)
+function RC.FormatAlert(alert)
     local info = RC.ALERTS[alert.type]
     local text = info.color .. ShortName(alert.sender) .. " " .. info.verb .. "|r"
     if alert.type ~= "CLEAR" then
-        text = text .. " at " .. FormatLocation(alert)
+        text = text .. " at " .. RC.FormatLocation(alert)
     end
     if alert.target then
         text = text .. ". Ganker: " .. RC.COLORS.ERROR .. alert.target .. "|r"
@@ -86,10 +86,11 @@ function RC:HandleAlert(alert)
     recentBySender[key] = now
 
     AddToLog(alert)
-    local text = FormatAlert(alert)
+    local text = RC.FormatAlert(alert)
     self:Print(text)
 
     if alert.type == "CLEAR" then
+        self:HideAlertPopup(alert.sender)
         return
     end
 
@@ -110,6 +111,10 @@ function RC:HandleAlert(alert)
 
     if self.db.autoWaypoint then
         self:SetWaypoint(alert, true)
+    end
+
+    if self.db.popup then
+        self:ShowAlertPopup(alert)
     end
 end
 
@@ -134,7 +139,7 @@ function RC:SetWaypoint(alert, quiet)
         C_SuperTrack.SetSuperTrackedUserWaypoint(true)
     end
     if not quiet then
-        self:Print("Waypoint set to " .. ShortName(alert.sender) .. " at " .. FormatLocation(alert) .. ".")
+        self:Print("Waypoint set to " .. ShortName(alert.sender) .. " at " .. RC.FormatLocation(alert) .. ".")
     end
     return true
 end
@@ -156,6 +161,6 @@ function RC:PrintLog()
     self:Print("Recent alerts:")
     for i = 1, math.min(#log, 10) do
         local entry = log[i]
-        print("  " .. RC.COLORS.INFO .. date("%m/%d %H:%M", entry.time) .. "|r " .. FormatAlert(entry))
+        print("  " .. RC.COLORS.INFO .. date("%m/%d %H:%M", entry.time) .. "|r " .. RC.FormatAlert(entry))
     end
 end

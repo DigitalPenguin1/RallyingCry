@@ -8,7 +8,7 @@ local addonName = ...
 RallyingCry = {}
 local RC = RallyingCry
 
-RC.VERSION = "0.1.0"
+RC.VERSION = "0.2.0"
 
 -- Addon message prefix (16 characters max)
 RC.PREFIX = "RallyingCry"
@@ -59,11 +59,19 @@ RC.ALERTS = {
 }
 RC.ALERT_ORDER = { "HELP", "WPVP", "HUNT", "CLEAR" }
 
+-- Replies to an alert (see Invites.lua). Same wire format, different fields:
+-- protocol ~ JOIN ~ alerter ~ flag        a guildmate accepted the alert
+-- protocol ~ NOINVITE ~ responder ~ code   the alerter couldn't invite them
+RC.RESPONSES = { JOIN = true, NOINVITE = true }
+
 local DEFAULTS = {
     sound = true,
     banner = true,
     autoWaypoint = false,
     showPanel = true,
+    popup = true,
+    autoInvite = true,
+    autoRaid = true,
     debug = false,
     panelPoint = nil,
     muted = {},
@@ -228,7 +236,7 @@ end
 
 -- C_ChatInfo.SendAddonMessage returns an Enum.SendAddonMessageResult on the
 -- modern API. Returns true on success, or false plus a reason.
-local function SendGuildAddonMessage(text)
+function RC:SendGuild(text)
     if C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() then
         return false, "the game is blocking addon messages right now"
     end
@@ -291,14 +299,17 @@ function RC:SendAlert(alertType, note)
     local payload = RC.Encode(alert)
     self:Debug("send " .. payload)
 
-    local ok, reason = SendGuildAddonMessage(payload)
+    local ok, reason = self:SendGuild(payload)
     if not ok then
         self:Print(RC.COLORS.ERROR .. "Couldn't send alert: " .. reason .. "|r")
         return
     end
 
-    if alertType ~= "CLEAR" then
+    if alertType == "CLEAR" then
+        self.activeAlert = nil
+    else
         self.lastSentAt = now
+        self.activeAlert = { type = alertType, sentAt = now, responders = {} }
     end
     self:Print("Sent " .. info.color .. info.label .. "|r to your guild" ..
         (target and (" (target: " .. target .. ")") or "") .. ".")
@@ -320,6 +331,12 @@ function RC:OnAddonMessage(prefix, text, channel, sender)
     end
 
     self:Debug("recv " .. sender .. ": " .. text)
+
+    local _, kind, arg1, arg2 = strsplit(FIELD_SEP, text)
+    if RC.RESPONSES[kind] then
+        self:HandleResponse(kind, sender, RC.CleanText(arg1), RC.CleanText(arg2))
+        return
+    end
 
     local alert = RC.Decode(text)
     if not alert then
@@ -346,6 +363,7 @@ local events = CreateFrame("Frame")
 events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("CHAT_MSG_ADDON")
+events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:SetScript("OnEvent", function(_, event, ...)
     if event == "ADDON_LOADED" then
         if ... ~= addonName then
@@ -362,6 +380,8 @@ events:SetScript("OnEvent", function(_, event, ...)
         end
     elseif event == "CHAT_MSG_ADDON" then
         RC:OnAddonMessage(...)
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        RC:FlushPendingInvites()
     end
 end)
 
@@ -392,6 +412,9 @@ local function PrintUsage()
     print("  /rc log - recent alerts")
     print("  /rc panel - show/hide the button panel")
     print("  /rc sound | banner | waypoint - toggle sound, screen banner, auto-waypoint")
+    print("  /rc popup - toggle the Accept/Decline window for incoming alerts")
+    print("  /rc invite - toggle auto-inviting guildmates who accept your alert")
+    print("  /rc raid - toggle turning your party into a raid when it fills up")
     print("  /rc mute <gank|wpvp|hunt|clear> - silence one alert type")
 end
 
@@ -418,6 +441,15 @@ SlashCmdList["RALLYINGCRY"] = function(input)
     elseif cmd == "waypoint" then
         RC.db.autoWaypoint = not RC.db.autoWaypoint
         RC:Print("Auto-waypoint on new alerts " .. OnOff(RC.db.autoWaypoint))
+    elseif cmd == "popup" then
+        RC.db.popup = not RC.db.popup
+        RC:Print("Accept/Decline window " .. OnOff(RC.db.popup))
+    elseif cmd == "invite" then
+        RC.db.autoInvite = not RC.db.autoInvite
+        RC:Print("Auto-invite guildmates who accept " .. OnOff(RC.db.autoInvite))
+    elseif cmd == "raid" then
+        RC.db.autoRaid = not RC.db.autoRaid
+        RC:Print("Convert to raid when your party is full " .. OnOff(RC.db.autoRaid))
     elseif cmd == "mute" then
         local alertType = SEND_COMMANDS[rest:lower()]
         if not alertType then

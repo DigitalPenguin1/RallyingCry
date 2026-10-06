@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Incoming alerts pop up an Accept/Decline window
+- Accept sets a waypoint and the alerter auto-invites you, turning a full party into a raid if they lead it
+- The alerter sees who's on the way. Responders get told when an invite can't happen and why
+- New toggles: `/rc popup`, `/rc invite`, `/rc raid`
+
 ## 0.1.0
 
 First version.

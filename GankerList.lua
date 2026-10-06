@@ -16,7 +16,6 @@ local HEADER_TOP = 40
 -- Column x offsets inside a row
 local COL_NAME, COL_REPORTS, COL_SEEN, COL_BOUNTY, COL_BUTTONS = 0, 150, 205, 330, 400
 
-local ADD_POPUP = "RALLYINGCRY_ADD_GANKER"
 local BOUNTY_POPUP = "RALLYINGCRY_POST_BOUNTY"
 local CLAIM_POPUP = "RALLYINGCRY_CONFIRM_CLAIM"
 local REMOVE_POPUP = "RALLYINGCRY_CONFIRM_REMOVE"
@@ -73,20 +72,6 @@ local function EditBoxPopup(fields)
     popup.text = fields.text
     return popup
 end
-
-StaticPopupDialogs[ADD_POPUP] = EditBoxPopup({
-    text = "Ganker's name, then an optional reason:",
-    button1 = "Add",
-    maxLetters = 100,
-    initial = function()
-        local target = RC:GetHostileTargetName()
-        return target and (RC.DisplayName(target) .. " ") or ""
-    end,
-    onAccept = function(text)
-        local name, reason = text:match("^%s*(%S*)%s*(.-)%s*$")
-        RC.Gankers:Add(name, reason)
-    end,
-})
 
 StaticPopupDialogs[BOUNTY_POPUP] = EditBoxPopup({
     text = "Gold to put on %s's head (0 withdraws yours):",
@@ -261,7 +246,7 @@ function List:Create()
     self.empty:SetText("No gankers yet. They're added when a Ganked! or Hunt alert names one, or click Add Ganker.")
 
     local add = SmallButton(frame, "Add Ganker", 100, function()
-        StaticPopup_Show(ADD_POPUP)
+        List:ShowAddForm()
     end)
     add:SetHeight(22)
     add:SetPoint("BOTTOMLEFT", PADDING, 12)
@@ -323,6 +308,139 @@ function List:Refresh()
     else
         self.pageText:SetText(#entries == 1 and "1 ganker" or (#entries .. " gankers"))
     end
+end
+
+----------------------------------------------------------------------
+-- Add Ganker form
+----------------------------------------------------------------------
+
+local FORM_WIDTH = 320
+local FORM_PADDING = 16
+
+local function FormLabel(form, text, anchor, gap)
+    local label = form:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    label:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -(gap or 12))
+    label:SetText(text)
+    return label
+end
+
+local function FormInput(form, label, width, maxLetters)
+    local box = CreateFrame("EditBox", nil, form, "InputBoxTemplate")
+    box:SetSize(width, 22)
+    box:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 6, -4)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(maxLetters)
+    return box
+end
+
+function List:CreateAddForm()
+    local form = CreateFrame("Frame", "RallyingCryAddGanker", self.frame, "BackdropTemplate")
+    form:SetSize(FORM_WIDTH, 250)
+    form:SetPoint("CENTER", self.frame, "CENTER")
+    form:SetFrameStrata("FULLSCREEN_DIALOG")
+    RC.Theme.SkinWindow(form)
+    form:EnableMouse(true)
+    form:Hide()
+
+    local title = form:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", FORM_PADDING, -14)
+    title:SetText("Add Ganker")
+    title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
+
+    local nameLabel = FormLabel(form, "Name", title, 14)
+    form.name = FormInput(form, nameLabel, 180, 40)
+
+    form.targetButton = SmallButton(form, "Use Target", 90, function()
+        local target = RC:GetHostileTargetName()
+        if target then
+            form.name:SetText(RC.DisplayName(target))
+            form.error:SetText("")
+        else
+            form.error:SetText("Target an enemy player first.")
+        end
+    end)
+    form.targetButton:SetHeight(22)
+    form.targetButton:SetPoint("LEFT", form.name, "RIGHT", 8, 0)
+
+    local reasonLabel = FormLabel(form, "Reason |cff808080(optional)|r", nameLabel, 34)
+    form.reason = FormInput(form, reasonLabel, FORM_WIDTH - FORM_PADDING * 2 - 6, 60)
+
+    local bountyLabel = FormLabel(form, "Bounty in gold |cff808080(optional)|r", reasonLabel, 34)
+    form.bounty = FormInput(form, bountyLabel, 90, 7)
+    form.bounty:SetNumeric(true)
+
+    form.error = form:CreateFontString(nil, "OVERLAY", "GameFontRedSmall")
+    form.error:SetPoint("TOPLEFT", bountyLabel, "BOTTOMLEFT", 0, -34)
+    form.error:SetWidth(FORM_WIDTH - FORM_PADDING * 2)
+    form.error:SetJustifyH("LEFT")
+
+    local cancel = SmallButton(form, "Cancel", 90, function()
+        form:Hide()
+    end)
+    cancel:SetHeight(22)
+    cancel:SetPoint("BOTTOMRIGHT", -FORM_PADDING, 14)
+
+    local add = SmallButton(form, "Add", 90, function()
+        List:SubmitAddForm()
+    end)
+    add:SetHeight(22)
+    add:SetPoint("RIGHT", cancel, "LEFT", -8, 0)
+
+    -- Tab moves between fields, Enter adds, Escape closes
+    local fields = { form.name, form.reason, form.bounty }
+    for i, box in ipairs(fields) do
+        box:SetScript("OnTabPressed", function()
+            local step = IsShiftKeyDown() and -1 or 1
+            fields[(i - 1 + step) % #fields + 1]:SetFocus()
+        end)
+        box:SetScript("OnEnterPressed", function()
+            List:SubmitAddForm()
+        end)
+        box:SetScript("OnEscapePressed", function()
+            form:Hide()
+        end)
+    end
+
+    self.addForm = form
+end
+
+function List:ShowAddForm()
+    if not self.addForm then
+        self:CreateAddForm()
+    end
+    local form = self.addForm
+    local target = RC:GetHostileTargetName()
+    form.name:SetText(target and RC.DisplayName(target) or "")
+    form.reason:SetText("")
+    form.bounty:SetText("")
+    form.error:SetText("")
+    form:Show()
+    if target then
+        form.reason:SetFocus()
+    else
+        form.name:SetFocus()
+    end
+end
+
+function List:SubmitAddForm()
+    local form = self.addForm
+    local name = RC.NormalizeName(form.name:GetText())
+    if not name then
+        form.error:SetText("Enter the ganker's name.")
+        form.name:SetFocus()
+        return
+    end
+    if not IsInGuild() then
+        form.error:SetText("You need to be in a guild to use the ganker list.")
+        return
+    end
+    local gold = tonumber(form.bounty:GetText())
+
+    RC.Gankers:Add(name, form.reason:GetText())
+    if gold and gold > 0 then
+        RC.Gankers:PostBounty(name, gold)
+    end
+    form:Hide()
 end
 
 function List:Toggle()

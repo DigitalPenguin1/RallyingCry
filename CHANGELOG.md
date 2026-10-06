@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add Ganker is now a form with separate Name, Reason, and Bounty fields, plus a Use Target button
 - The alert banner shows below the Accept/Decline window instead of behind it, and fades out after a few seconds
 - All Clear only sends while you have an alert out (10 minutes), so it can't be spammed
 - All Clear removes the waypoint guildmates set to your alert, unless they've moved it themselves

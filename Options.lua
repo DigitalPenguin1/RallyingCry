@@ -61,7 +61,7 @@ function Options:Register()
     AddDBCheckbox(category, "autoRaid", "Convert to raid when full",
         "If your party is full and you lead it, turn it into a raid so more guildmates can join.")
 
-    AddHeader(layout, "Panel")
+    AddHeader(layout, "Panel & Minimap")
     AddCheckbox(category, "showPanel", "Show button panel",
         "The draggable panel with one button per alert. You can also use /rc panel or the keybindings.",
         true,
@@ -73,6 +73,12 @@ function Options:Register()
                 RC.Panel:Hide(true)
             end
         end)
+
+    AddCheckbox(category, "showMinimap", "Show minimap button",
+        "Left-click toggles the panel, right-click opens these settings. Drag it to move it around the minimap.",
+        true,
+        function() return RC.db.showMinimap end,
+        function(value) RC.MinimapButton:SetShown(value) end)
 
     Settings.RegisterAddOnCategory(category)
 end

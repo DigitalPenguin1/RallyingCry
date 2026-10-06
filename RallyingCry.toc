@@ -6,10 +6,13 @@
 ## SavedVariables: RallyingCryDB
 ## IconTexture: Interface\Icons\Ability_Warrior_BattleShout
 ## AddonCompartmentFunc: RallyingCry_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: RallyingCry_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: RallyingCry_OnAddonCompartmentLeave
 
 Core.lua
 Theme.lua
 Alerts.lua
 Invites.lua
 Panel.lua
+Minimap.lua
 Options.lua

@@ -29,6 +29,7 @@ The window closes on its own after 60 seconds, or when the sender calls All Clea
 ## Features
 
 - **Settings page**: ESC > Options > AddOns > Rallying Cry, the gear on the panel, `/rc settings`, or right-click Rallying Cry in the addon compartment. Every option below is there as a checkbox
+- **Minimap button**: left-click toggles the panel, right-click opens settings, drag to move. Hover to see the last alert. On by default, turn it off in settings or with `/rc minimap`
 - **Button panel**: draggable, one click per alert. Works in combat. `/rc panel` to show or hide
 - **Keybindings**: ESC > Options > Keybindings > AddOns > Rallying Cry
 - **Waypoints**: `/rc go` pins the last alert on your map and tracks it. `/rc waypoint` does it automatically for every alert
@@ -47,6 +48,7 @@ The window closes on its own after 60 seconds, or when the sender calls All Clea
 /rc log                 recent alerts
 /rc settings            open the settings page
 /rc panel               show/hide the button panel
+/rc minimap             show/hide the minimap button
 /rc sound               toggle alert sound
 /rc banner              toggle the screen banner
 /rc waypoint            toggle auto-waypoint

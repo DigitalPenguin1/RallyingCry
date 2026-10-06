@@ -69,6 +69,7 @@ local DEFAULTS = {
     banner = true,
     autoWaypoint = false,
     showPanel = true,
+    showMinimap = true,
     popup = true,
     autoInvite = true,
     autoRaid = true,
@@ -376,6 +377,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         RC.Options:Register()
     elseif event == "PLAYER_LOGIN" then
         RC.Panel:Create()
+        RC.MinimapButton:Create()
         if not IsInGuild() then
             RC:Print(RC.COLORS.INFO .. "You're not in a guild, so alerts are off until you join one.|r")
         end
@@ -413,6 +415,7 @@ local function PrintUsage()
     print("  /rc log - recent alerts")
     print("  /rc settings - open the settings page")
     print("  /rc panel - show/hide the button panel")
+    print("  /rc minimap - show/hide the minimap button")
     print("  /rc sound | banner | waypoint - toggle sound, screen banner, auto-waypoint")
     print("  /rc popup - toggle the Accept/Decline window for incoming alerts")
     print("  /rc invite - toggle auto-inviting guildmates who accept your alert")
@@ -434,6 +437,8 @@ SlashCmdList["RALLYINGCRY"] = function(input)
         RC:PrintLog()
     elseif cmd == "settings" or cmd == "options" or cmd == "config" then
         RC.Options:Open()
+    elseif cmd == "minimap" then
+        RC.MinimapButton:Toggle()
     elseif cmd == "panel" then
         RC.Panel:Toggle()
     elseif cmd == "sound" then
@@ -470,14 +475,5 @@ SlashCmdList["RALLYINGCRY"] = function(input)
         RC:Print("Version " .. RC.VERSION .. " (protocol " .. RC.PROTOCOL .. ")")
     else
         PrintUsage()
-    end
-end
-
--- Left-click toggles the panel, right-click opens settings
-function RallyingCry_OnAddonCompartmentClick(_, buttonName)
-    if buttonName == "RightButton" then
-        RC.Options:Open()
-    else
-        RC.Panel:Toggle()
     end
 end

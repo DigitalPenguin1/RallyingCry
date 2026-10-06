@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Minimap button (on by default): left-click toggles the panel, right-click opens settings, drag to move, tooltip shows the last alert. Turn it off in settings or with `/rc minimap`
 - Settings page under ESC > Options > AddOns > Rallying Cry. Open it with the gear on the panel, `/rc settings`, or right-click the addon compartment entry
 - Forever gold and bronze theme for the panel, buttons, chat tag, and addon list title (was red)
 

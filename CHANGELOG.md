@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Forever gold and bronze theme for the panel, buttons, chat tag, and addon list title (was red)
+
 ## 0.2.0
 
 - Incoming alerts pop up an Accept/Decline window

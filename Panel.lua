@@ -37,16 +37,7 @@ function Panel:Create()
     local frame = CreateFrame("Frame", "RallyingCryPanel", UIParent, "BackdropTemplate")
     frame:SetSize(BUTTON_WIDTH + PADDING * 2,
         TITLE_HEIGHT + PADDING + count * BUTTON_HEIGHT + (count - 1) * BUTTON_GAP + PADDING)
-    frame:SetBackdrop({
-        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true,
-        tileSize = 16,
-        edgeSize = 14,
-        insets = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    frame:SetBackdropColor(0.05, 0.05, 0.05, 0.85)
-    frame:SetBackdropBorderColor(0.6, 0.15, 0.15, 1)
+    RC.Theme.SkinWindow(frame)
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -59,7 +50,8 @@ function Panel:Create()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOPLEFT", PADDING, -8)
-    title:SetText(RC.COLORS.BRAND .. "Rallying|r Cry")
+    title:SetText("Rallying Cry")
+    title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
 
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetSize(22, 22)
@@ -73,6 +65,7 @@ function Panel:Create()
         local info = RC.ALERTS[alertType]
         local button = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
         button:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+        RC.Theme.SkinButton(button)
         if previous then
             button:SetPoint("TOP", previous, "BOTTOM", 0, -BUTTON_GAP)
         else

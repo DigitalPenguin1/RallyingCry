@@ -17,7 +17,7 @@ RC.PREFIX = "RallyingCry"
 RC.PROTOCOL = 1
 
 RC.COLORS = {
-    BRAND = "|cffff3333",
+    BRAND = "|cffd1a84f",   -- Forever gold (Theme.GOLD_LIGHT)
     SUCCESS = "|cff00ff00",
     ERROR = "|cffff0000",
     WARNING = "|cffffff00",

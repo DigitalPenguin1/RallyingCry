@@ -1,5 +1,5 @@
 ## Interface: 16001
-## Title: |cffff3333Rallying|r |cffffd100Cry|r
+## Title: |cffd1a84fRallying Cry|r
 ## Notes: Call your guild for help when you're ganked, find world PvP, or hunt a ganker down
 ## Author: Relyk
 ## Version: 0.2.0
@@ -8,6 +8,7 @@
 ## AddonCompartmentFunc: RallyingCry_OnAddonCompartmentClick
 
 Core.lua
+Theme.lua
 Alerts.lua
 Invites.lua
 Panel.lua

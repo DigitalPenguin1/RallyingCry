@@ -140,11 +140,11 @@ function RC:FlushPendingInvites()
 end
 
 RC.MessageHandlers.JOIN = function(self, sender, subject, extra)
-    self:HandleResponse("JOIN", sender, RC.CleanText(subject), RC.CleanText(extra))
+    self:HandleResponse("JOIN", sender, RC.NormalizeName(subject), RC.CleanText(extra))
 end
 
 RC.MessageHandlers.NOINVITE = function(self, sender, subject, extra)
-    self:HandleResponse("NOINVITE", sender, RC.CleanText(subject), RC.CleanText(extra))
+    self:HandleResponse("NOINVITE", sender, RC.NormalizeName(subject), RC.CleanText(extra))
 end
 
 function RC:HandleResponse(kind, sender, subject, extra)

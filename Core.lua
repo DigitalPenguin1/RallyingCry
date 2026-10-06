@@ -166,14 +166,23 @@ end
 
 -- "Name-Realm" with the realm always filled in, so a ganker seen by
 -- guildmates on different connected realms is one entry. Nil if empty.
+-- Forever names can have a surname ("Fanielraal Stormblessed"), so only the
+-- first letter of each word is capitalized and the rest is left as typed.
 function RC.NormalizeName(name)
-    name = RC.CleanText(name, 40)
+    name = RC.CleanText(name, 50)
     local short, realm = name:match("^([^%-]+)%-?(.*)$")
     if not short then
         return nil
     end
-    if short:byte(1) < 128 then
-        short = short:sub(1, 1):upper() .. short:sub(2):lower()
+    short = short:gsub("%s+", " "):gsub("^%s", ""):gsub("%s$", "")
+    short = short:gsub("(%S)(%S*)", function(first, rest)
+        if first:byte() < 128 then
+            first = first:upper()
+        end
+        return first .. rest
+    end)
+    if short == "" then
+        return nil
     end
     realm = realm:gsub("%s", "")
     if realm == "" then
@@ -198,12 +207,10 @@ function RC.Pack(...)
 end
 
 function RC:PlayerFullName()
-    local name = UnitName("player")
-    local realm = GetNormalizedRealmName()
-    if realm then
-        return name .. "-" .. realm
+    if not self.fullName then
+        self.fullName = RC.NormalizeName(UnitName("player"))
     end
-    return name
+    return self.fullName
 end
 
 -- Current map, position (0-1 coords), zone, and subzone. Position is nil
@@ -430,7 +437,9 @@ function RC:OnAddonMessage(prefix, text, channel, sender)
     if RC.IsSecret(text) or RC.IsSecret(sender) then
         return
     end
-    if sender == self:PlayerFullName() or sender == UnitName("player") then
+    -- Compare names in one format everywhere (see NormalizeName)
+    sender = RC.NormalizeName(sender)
+    if not sender or sender == self:PlayerFullName() then
         return
     end
 

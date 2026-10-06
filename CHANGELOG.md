@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix: characters with a surname ("Fanielraal Stormblessed") weren't recognized as officers, because the second word got lowercased. Names now keep their capitals
+
 ## 0.4.0
 
 - KOS guilds: officers can put a whole guild on KOS. Every member counts as a ganker, and you're warned when you target or mouse over one

@@ -589,11 +589,11 @@ end
 RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, lastSeen, updated, removedBy, zone, reason, guild)
     local record = {
         name = RC.NormalizeName(name),
-        addedBy = OrNil(addedBy),
+        addedBy = RC.NormalizeName(addedBy),
         reports = tonumber(reports) or 0,
         lastSeen = tonumber(lastSeen),
         updated = tonumber(updated),
-        removedBy = OrNil(removedBy),
+        removedBy = RC.NormalizeName(removedBy),
         zone = OrNil(zone),
         reason = OrNil(reason),
         guild = OrNil(guild),
@@ -618,10 +618,10 @@ end
 RC.MessageHandlers.BNTY = function(_, sender, relay, name, poster, gold, status, claimant, updated)
     local record = {
         name = RC.NormalizeName(name),
-        poster = OrNil(poster),
+        poster = RC.NormalizeName(poster),
         gold = tonumber(gold),
         status = status,
-        claimant = OrNil(claimant),
+        claimant = RC.NormalizeName(claimant),
         updated = tonumber(updated),
     }
     if not (record.name and record.poster and record.gold and record.updated and BOUNTY_STATUS[status]) then
@@ -641,9 +641,9 @@ RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updat
     local record = {
         name = OrNil(RC.CleanText(name, 30)),
         realm = OrNil(realm),
-        addedBy = OrNil(addedBy),
+        addedBy = RC.NormalizeName(addedBy),
         updated = tonumber(updated),
-        removedBy = OrNil(removedBy),
+        removedBy = RC.NormalizeName(removedBy),
         reason = OrNil(reason),
     }
     if not (record.name and record.addedBy and record.updated) then
@@ -738,6 +738,7 @@ function Gankers:RequestSync()
 end
 
 RC.MessageHandlers.SYNCREQ = function(_, sender, requester, since)
+    requester = RC.NormalizeName(requester)
     since = tonumber(since)
     if requester ~= sender or not since or pendingSync[requester] then
         return
@@ -755,6 +756,7 @@ RC.MessageHandlers.SYNCREQ = function(_, sender, requester, since)
 end
 
 RC.MessageHandlers.SYNCACK = function(_, sender, requester, latest)
+    requester = RC.NormalizeName(requester)
     local timer = pendingSync[requester]
     -- Stand down unless we know about newer changes than the one answering
     if timer and Gankers:LatestStamp() <= (tonumber(latest) or 0) then

@@ -1,0 +1,41 @@
+name: Feature Request
+description: Suggest an idea or improvement for Rallying Cry
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea? We'd love to hear it! Fill out the form below.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "\U0001F4A1 What problem does this solve?"
+      description: Describe the limitation or friction you're running into.
+      placeholder: e.g. I have to manually track X every session and it's tedious...
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature
+    attributes:
+      label: "\u2728 Describe the Feature"
+      description: A clear description of what you'd like to see added or changed.
+      placeholder: I'd like...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: "\u2694\uFE0F How would you use it?"
+      description: Walk us through a typical use case.
+      placeholder: e.g. When I'm camped at a flight path, I'd press one key and...
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "\U0001F4DD Additional Context"
+      description: Mockups, examples from other addons, or anything else that helps paint the picture.

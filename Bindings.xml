@@ -1,0 +1,20 @@
+<Bindings>
+  <Binding name="RALLYINGCRY_HELP" Category="BINDING_HEADER_RALLYINGCRY">
+    RallyingCry:SendAlert("HELP")
+  </Binding>
+  <Binding name="RALLYINGCRY_WPVP" Category="BINDING_HEADER_RALLYINGCRY">
+    RallyingCry:SendAlert("WPVP")
+  </Binding>
+  <Binding name="RALLYINGCRY_HUNT" Category="BINDING_HEADER_RALLYINGCRY">
+    RallyingCry:SendAlert("HUNT")
+  </Binding>
+  <Binding name="RALLYINGCRY_CLEAR" Category="BINDING_HEADER_RALLYINGCRY">
+    RallyingCry:SendAlert("CLEAR")
+  </Binding>
+  <Binding name="RALLYINGCRY_WAYPOINT" Category="BINDING_HEADER_RALLYINGCRY">
+    RallyingCry:WaypointToLastAlert()
+  </Binding>
+  <Binding name="RALLYINGCRY_PANEL" Category="BINDING_HEADER_RALLYINGCRY">
+    RallyingCry.Panel:Toggle()
+  </Binding>
+</Bindings>

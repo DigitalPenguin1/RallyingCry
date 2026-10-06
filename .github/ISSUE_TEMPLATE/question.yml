@@ -1,0 +1,40 @@
+name: Question
+description: Ask a question about how to use Rallying Cry
+title: "[QUESTION] "
+labels: ["question"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No question is too small! Fill out the form and we'll get back to you.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: "\u2753 What do you want to know?"
+      description: Ask your question here.
+      placeholder: How do I...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "\u2139\uFE0F Context"
+      description: What were you trying to do when you ran into this?
+      placeholder: I was trying to...
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: "\u2705 What I Already Tried"
+      description: Did you check the README, try a `/reload`, or search existing issues?
+      placeholder: I already tried...
+
+  - type: input
+    id: version
+    attributes:
+      label: Addon Version
+      description: Type `/rc version` in chat.
+      placeholder: e.g. 0.1.0

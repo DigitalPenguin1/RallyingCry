@@ -1,0 +1,105 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in Rallying Cry
+title: "[BUG] "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Fill out as much as you can — it helps a lot.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "\U0001F41E Describe the Bug"
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "\U0001F501 Steps to Reproduce"
+      description: How do we reproduce the issue?
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "\u2705 Expected Behavior"
+      description: What did you expect to happen?
+      placeholder: I expected...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "\u274C What Actually Happened"
+      description: What happened instead?
+      placeholder: Instead...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: "\u2139\uFE0F Addon Version"
+      description: Type `/rc version` in chat.
+      placeholder: e.g. 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: other_addons
+    attributes:
+      label: Other PvP / Alert Addons Installed
+      placeholder: e.g. GladiatorlosSA, or None
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "\u2705 Checklist"
+      options:
+        - label: I checked that I am on the latest version of the addon
+        - label: I disabled other PvP / alert addons to confirm this is not a conflict
+        - label: I tested after a `/reload`
+
+  - type: textarea
+    id: error_log
+    attributes:
+      label: "\U0001F4DC Error Log"
+      description: |
+        If WoW showed a Lua error popup, paste it here.
+        You can type `/console scriptErrors 1` in chat to enable error popups, then reproduce the bug.
+      placeholder: Paste error here...
+      render: text
+
+  - type: textarea
+    id: debug_output
+    attributes:
+      label: "\U0001F50D Debug Output"
+      description: |
+        Type `/rc debug` in chat, reproduce the bug, then paste any [Rallying Cry Debug] lines here. Type `/rc debug` again to turn it off.
+        **Note:** WoW doesn't let you copy chat text by default. Install [Chat Copy Paste](https://www.curseforge.com/wow/addons/chat-copy-paste) to copy the output.
+      placeholder: Paste debug output here...
+      render: text
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: "\U0001F4F7 Screenshots or Video"
+      description: Attach a screenshot or short clip if relevant — especially helpful for panel or alert display issues.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "\U0001F4DD Additional Context"
+      description: Does it happen every time? Only in certain zones? Only in combat? Any other details help!

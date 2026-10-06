@@ -1,0 +1,14 @@
+package-as: RallyingCry
+
+enable-nolib-creation: no
+
+ignore:
+  - README.md
+  - .github
+  - .gitignore
+  - .pkgmeta
+  - .claude
+
+manual-changelog: CHANGELOG.md
+
+license-output: LICENSE.txt

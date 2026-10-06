@@ -6,6 +6,14 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 
 > **WoW: Forever only.** Built for the Forever client (interface 16001). It won't load on Classic Era, and isn't supported on Retail.
 
+> **Early version.** Rallying Cry is being built and tested on the Forever beta. Expect rough edges, and please [report anything odd](https://github.com/DigitalPenguin1/RallyingCry/issues).
+
+## Quick Start
+
+1. Install the addon and join a guild. Your guildmates need Rallying Cry too
+2. Use the button panel, the minimap button, or `/rc gank` when you're in trouble
+3. When a guildmate calls for help, click **Accept** to join their group and get a waypoint to them
+
 ## Alerts
 
 | Alert | Command | What guildmates see |
@@ -38,12 +46,14 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 
 The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
 
+Open the list from the **Ganker List** button on the panel, Shift-click the minimap button, a keybinding, or `/rc kos`. Gankers with the biggest bounty are listed first. Hover a row for the reason, who added them, where they were last seen, and each bounty. Auto-adding and warnings can each be turned off in settings.
+
 ## Features
 
-- **Settings page**: ESC > Options > AddOns > Rallying Cry, the gear on the panel, `/rc settings`, or right-click Rallying Cry in the addon compartment. Every option below is there as a checkbox
-- **Minimap button**: left-click toggles the panel, right-click opens settings, drag to move. Hover to see the last alert. On by default, turn it off in settings or with `/rc minimap`
-- **Button panel**: draggable, one click per alert. Works in combat. `/rc panel` to show or hide
-- **Keybindings**: ESC > Options > Keybindings > AddOns > Rallying Cry
+- **Settings page**: ESC > Options > AddOns > Rallying Cry, the gear on the panel, `/rc settings`, or right-click Rallying Cry in the addon compartment. Every option below is there as a checkbox, plus an **About** page
+- **Minimap button**: left-click toggles the panel, Shift-click opens the ganker list, right-click opens settings, drag to move. Hover to see the last alert. On by default, turn it off in settings or with `/rc minimap`
+- **Button panel**: draggable, one click per alert plus a Ganker List button and a settings gear. Works in combat. `/rc panel` to show or hide
+- **Keybindings**: ESC > Options > Keybindings > AddOns > Rallying Cry. Bind any of the four alerts, waypoint to last alert, the panel, or the ganker list
 - **Waypoints**: `/rc go` pins the last alert on your map and tracks it. `/rc waypoint` does it automatically for every alert
 - **Alert log**: `/rc log` shows the last 10 alerts, saved across sessions
 - **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the banner and sound
@@ -87,9 +97,41 @@ Forever runs the modern addon API with Midnight's restrictions, which shapes wha
 - **Ganker warnings may not fire in combat**, for the same reason.
 - Guildmates only see alerts if they have Rallying Cry installed.
 
+## What Gets Shared
+
+Everything goes over the hidden guild addon channel, so only guildmates running Rallying Cry see it.
+
+- **Alerts** send your character name, zone, subzone, map coordinates, your enemy target's name (if any), and your note
+- **Accepting an alert** tells the sender you're coming
+- **The ganker list and bounties** are copied to every guildmate's computer, so the list survives as long as anyone in the guild has it
+
+Nothing leaves the game. Rallying Cry has no website, account, or tracking.
+
 ## Install
 
-Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddOns/RallyingCry/RallyingCry.toc`, then restart the game.
+Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddOns/RallyingCry/RallyingCry.toc`, then restart the game. `_classic_beta_` is the beta folder; after launch, use the AddOns folder inside your Forever install.
+
+## Troubleshooting & Support
+
+| Issue | Solution |
+|-------|----------|
+| "You need to be in a guild" | Rallying Cry only works inside a guild. Join one, then `/reload` |
+| Guildmates don't see my alerts | They need Rallying Cry installed and enabled. Alerts also can't send during a dungeon boss fight or a PvP match |
+| No invite after clicking Accept | The sender has to lead their group (or not be in one), and you can't already be in a group. You'll get a message saying which |
+| Alert has no coordinates | The sender was in an instance, where the game hides positions |
+| Ganker list is empty on a new character | It fills in from guildmates within about 20 seconds of logging in. Someone with the list has to be online |
+| Panel or minimap button missing | `/rc panel` or `/rc minimap`, or check the settings page |
+| New version didn't load | Fully restart the game after updating, not just `/reload` |
+
+**Debug tip**: `/rc debug` logs every message Rallying Cry sends and receives. To copy chat output, install [Chat Copy Paste](https://www.curseforge.com/wow/addons/chat-copy-paste).
+
+**Bugs and ideas**: https://github.com/DigitalPenguin1/RallyingCry/issues
+
+**Support development**: if you enjoy Rallying Cry, you can [buy me a coffee](https://buymeacoffee.com/relyk22).
+
+## Version History
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

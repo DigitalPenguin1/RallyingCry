@@ -17,7 +17,7 @@ RC.PREFIX = "RallyingCry"
 RC.PROTOCOL = 1
 
 RC.COLORS = {
-    BRAND = "|cffd1a84f",   -- Forever gold (Theme.GOLD_LIGHT)
+    BRAND = "|cffffd100",   -- Blizzard gold text, bright enough to stand out in chat
     SUCCESS = "|cff00ff00",
     ERROR = "|cffff0000",
     WARNING = "|cffffff00",

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The alert banner shows below the Accept/Decline window instead of behind it, and fades out after a few seconds
 - All Clear only sends while you have an alert out (10 minutes), so it can't be spammed
 - All Clear removes the waypoint guildmates set to your alert, unless they've moved it themselves
 - `/rc go` and the waypoint keybind no longer go to an alert that was called off

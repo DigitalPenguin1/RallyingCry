@@ -72,12 +72,47 @@ local function AddToLog(alert)
     end
 end
 
-local function ShowBanner(text)
-    if RaidNotice_AddMessage and RaidWarningFrame then
-        RaidNotice_AddMessage(RaidWarningFrame, text, ChatTypeInfo["RAID_WARNING"])
-    else
-        UIErrorsFrame:AddMessage(text)
+-- Our own banner instead of the raid warning frame, which sits right where
+-- the Accept/Decline popups open. This one goes below the popups.
+local BANNER_OFFSET = -340
+local BANNER_HOLD = 4
+local BANNER_FADE = 1.5
+local banner
+
+local function GetBanner()
+    if banner then
+        return banner
     end
+    banner = CreateFrame("Frame", "RallyingCryBanner", UIParent)
+    banner:SetSize(900, 60)
+    banner:SetPoint("TOP", UIParent, "TOP", 0, BANNER_OFFSET)
+    banner:SetFrameStrata("HIGH")
+    banner:Hide()
+
+    banner.text = banner:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    banner.text:SetAllPoints()
+    banner.text:SetJustifyH("CENTER")
+    banner.text:SetShadowOffset(2, -2)
+
+    banner.fade = banner:CreateAnimationGroup()
+    local alpha = banner.fade:CreateAnimation("Alpha")
+    alpha:SetFromAlpha(1)
+    alpha:SetToAlpha(0)
+    alpha:SetStartDelay(BANNER_HOLD)
+    alpha:SetDuration(BANNER_FADE)
+    banner.fade:SetScript("OnFinished", function()
+        banner:Hide()
+    end)
+    return banner
+end
+
+local function ShowBanner(text)
+    local frame = GetBanner()
+    frame.fade:Stop()
+    frame.text:SetText(text)
+    frame:SetAlpha(1)
+    frame:Show()
+    frame.fade:Play()
 end
 
 function RC:HandleAlert(alert)

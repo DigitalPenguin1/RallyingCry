@@ -23,7 +23,7 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 | **Hunt Ganker** | `/rc hunt [name] [note]` | You're hunting a ganker. Uses your target if it's an enemy player, otherwise the name you type |
 | **All Clear** | `/rc clear` | You're safe, call it off. Closes their Accept/Decline window and removes the waypoint to you. Only works while you have an alert out (10 minutes) |
 
-Each incoming alert shows up in chat and as a raid-warning banner, with a sound. If your target is an enemy player when you send, their name rides along.
+Each incoming alert shows up in chat and as a banner across the middle of your screen, with a sound. If your target is an enemy player when you send, their name rides along.
 
 ## Accept or Decline
 

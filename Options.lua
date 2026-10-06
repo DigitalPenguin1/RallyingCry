@@ -48,11 +48,14 @@ function Options:Register()
     AddHeader(layout, "Alert Types")
     for _, alertType in ipairs(RC.ALERT_ORDER) do
         local info = RC.ALERTS[alertType]
-        AddCheckbox(category, "show" .. alertType, info.label,
-            "When off, " .. info.label .. " alerts still show in chat, but with no window, banner, or sound.",
-            true,
-            function() return not RC.db.muted[alertType] end,
-            function(value) RC.db.muted[alertType] = (not value) or nil end)
+        -- All Clear has no window, banner, or sound to turn off
+        if alertType ~= "CLEAR" then
+            AddCheckbox(category, "show" .. alertType, info.label,
+                "When off, " .. info.label .. " alerts still show in chat, but with no window, banner, or sound.",
+                true,
+                function() return not RC.db.muted[alertType] end,
+                function(value) RC.db.muted[alertType] = (not value) or nil end)
+        end
     end
 
     AddHeader(layout, "When Guildmates Answer Your Alert")

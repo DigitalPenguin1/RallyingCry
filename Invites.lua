@@ -11,9 +11,6 @@ local POPUP = "RALLYINGCRY_ALERT"
 -- Seconds before an unanswered popup closes itself
 local POPUP_TIMEOUT = 60
 
--- Seconds after sending an alert that accepts still get invited
-local ACCEPT_WINDOW = 600
-
 local MAX_PARTY = 5
 local MAX_RAID = 40
 
@@ -165,7 +162,7 @@ function RC:HandleResponse(kind, sender, subject, extra)
 
     -- JOIN: someone accepted our alert
     local active = self.activeAlert
-    if not active or GetTime() - active.sentAt > ACCEPT_WINDOW then
+    if not self:HasActiveAlert() then
         self:Debug("ignored late JOIN from " .. sender)
         return
     end

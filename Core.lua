@@ -85,6 +85,10 @@ local DEFAULTS = {
 -- Seconds between alerts from you, so one button mash doesn't spam the guild
 local SEND_COOLDOWN = 10
 
+-- How long your alert stays active: guildmates can answer it, and you can
+-- call it off with All Clear
+RC.ACTIVE_ALERT_WINDOW = 600
+
 -- Max length of the free-text note
 local NOTE_MAX = 100
 
@@ -299,6 +303,10 @@ end
 -- Sending
 ----------------------------------------------------------------------
 
+function RC:HasActiveAlert()
+    return self.activeAlert ~= nil and GetTime() - self.activeAlert.sentAt <= RC.ACTIVE_ALERT_WINDOW
+end
+
 function RC:SendAlert(alertType, note)
     local info = RC.ALERTS[alertType]
     if not info then
@@ -311,6 +319,10 @@ function RC:SendAlert(alertType, note)
     end
 
     local now = GetTime()
+    if alertType == "CLEAR" and not self:HasActiveAlert() then
+        self:Print("You don't have an active alert to call off.")
+        return
+    end
     if alertType ~= "CLEAR" and self.lastSentAt and now - self.lastSentAt < SEND_COOLDOWN then
         local wait = math.ceil(SEND_COOLDOWN - (now - self.lastSentAt))
         self:Print(RC.COLORS.WARNING .. "Easy there. You can send another alert in " .. wait .. "s.|r")
@@ -469,7 +481,7 @@ local function PrintUsage()
     print("  /rc popup - toggle the Accept/Decline window for incoming alerts")
     print("  /rc invite - toggle auto-inviting guildmates who accept your alert")
     print("  /rc raid - toggle turning your party into a raid when it fills up")
-    print("  /rc mute <gank|wpvp|hunt|clear> - silence one alert type")
+    print("  /rc mute <gank|wpvp|hunt> - silence one alert type")
 end
 
 SLASH_RALLYINGCRY1 = "/rc"
@@ -526,8 +538,8 @@ SlashCmdList["RALLYINGCRY"] = function(input)
         RC:Print("Convert to raid when your party is full " .. OnOff(RC.db.autoRaid))
     elseif cmd == "mute" then
         local alertType = SEND_COMMANDS[rest:lower()]
-        if not alertType then
-            RC:Print("Usage: /rc mute <gank|wpvp|hunt|clear>")
+        if not alertType or alertType == "CLEAR" then
+            RC:Print("Usage: /rc mute <gank|wpvp|hunt>")
             return
         end
         RC.db.muted[alertType] = not RC.db.muted[alertType] or nil

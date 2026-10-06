@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- All Clear only sends while you have an alert out (10 minutes), so it can't be spammed
+- All Clear removes the waypoint guildmates set to your alert, unless they've moved it themselves
+- `/rc go` and the waypoint keybind no longer go to an alert that was called off
+- Removed the All Clear checkbox from settings, which had nothing to turn off
+
 ## 0.3.0
 
 - Guild ganker list: shared with every guildmate running Rallying Cry, and caught up automatically when you log in

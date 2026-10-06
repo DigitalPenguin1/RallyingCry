@@ -95,6 +95,12 @@ function RC:HandleAlert(alert)
 
     if alert.type == "CLEAR" then
         self:HideAlertPopup(alert.sender)
+        if self.lastAlert and self.lastAlert.sender == alert.sender then
+            self.lastAlert = nil
+        end
+        if self:ClearWaypointFrom(alert.sender) then
+            self:Print(RC.COLORS.INFO .. "Removed the waypoint to " .. ShortName(alert.sender) .. ".|r")
+        end
         return
     end
 
@@ -142,15 +148,36 @@ function RC:SetWaypoint(alert, quiet)
     if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
         C_SuperTrack.SetSuperTrackedUserWaypoint(true)
     end
+    self.waypointAlert = alert
     if not quiet then
         self:Print("Waypoint set to " .. ShortName(alert.sender) .. " at " .. RC.FormatLocation(alert) .. ".")
     end
     return true
 end
 
+-- Removes the map pin we set for this sender's alert. Leaves it alone if the
+-- player has since placed a pin of their own. Returns true if one was removed.
+function RC:ClearWaypointFrom(sender)
+    local alert = self.waypointAlert
+    if not (alert and alert.sender == sender) then
+        return false
+    end
+    self.waypointAlert = nil
+    local point = C_Map.HasUserWaypoint() and C_Map.GetUserWaypoint()
+    if not point or point.uiMapID ~= alert.mapID then
+        return false
+    end
+    local x, y = point.position:GetXY()
+    if math.abs(x - alert.x) > 0.001 or math.abs(y - alert.y) > 0.001 then
+        return false
+    end
+    C_Map.ClearUserWaypoint()
+    return true
+end
+
 function RC:WaypointToLastAlert()
     if not self.lastAlert then
-        self:Print("No alerts yet this session.")
+        self:Print("No active alert to go to.")
         return
     end
     self:SetWaypoint(self.lastAlert)

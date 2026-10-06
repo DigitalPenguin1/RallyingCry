@@ -21,7 +21,7 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 | **Ganked!** | `/rc gank [note]` | You're being ganked, plus your zone, subzone, and coordinates |
 | **World PvP** | `/rc wpvp [note]` | There's a fight at your location |
 | **Hunt Ganker** | `/rc hunt [name] [note]` | You're hunting a ganker. Uses your target if it's an enemy player, otherwise the name you type |
-| **All Clear** | `/rc clear` | You're safe, call it off |
+| **All Clear** | `/rc clear` | You're safe, call it off. Closes their Accept/Decline window and removes the waypoint to you. Only works while you have an alert out (10 minutes) |
 
 Each incoming alert shows up in chat and as a raid-warning banner, with a sound. If your target is an enemy player when you send, their name rides along.
 
@@ -56,8 +56,8 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 - **Keybindings**: ESC > Options > Keybindings > AddOns > Rallying Cry. Bind any of the four alerts, waypoint to last alert, the panel, or the ganker list
 - **Waypoints**: `/rc go` pins the last alert on your map and tracks it. `/rc waypoint` does it automatically for every alert
 - **Alert log**: `/rc log` shows the last 10 alerts, saved across sessions
-- **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the banner and sound
-- **Spam guard**: 10 second cooldown between your alerts (All Clear is exempt), and repeat alerts from the same person get dropped
+- **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the window, banner, and sound
+- **Spam guard**: 10 second cooldown between your alerts, and repeat alerts from the same person get dropped. All Clear skips the cooldown but only works while you have an alert out
 
 ## All commands
 
@@ -82,7 +82,7 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 /rc popup               toggle the Accept/Decline window
 /rc invite              toggle auto-inviting guildmates who accept
 /rc raid                toggle turning a full party into a raid
-/rc mute <type>         silence gank, wpvp, hunt, or clear
+/rc mute <type>         silence gank, wpvp, or hunt
 /rc version             addon and protocol version
 /rc debug               debug output
 ```

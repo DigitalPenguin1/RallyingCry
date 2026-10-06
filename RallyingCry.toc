@@ -12,3 +12,4 @@ Theme.lua
 Alerts.lua
 Invites.lua
 Panel.lua
+Options.lua

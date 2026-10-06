@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Settings page under ESC > Options > AddOns > Rallying Cry. Open it with the gear on the panel, `/rc settings`, or right-click the addon compartment entry
 - Forever gold and bronze theme for the panel, buttons, chat tag, and addon list title (was red)
 
 ## 0.2.0

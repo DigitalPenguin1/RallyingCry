@@ -60,6 +60,21 @@ function Panel:Create()
         Panel:Hide()
     end)
 
+    local gear = CreateFrame("Button", nil, frame)
+    gear:SetSize(14, 14)
+    gear:SetPoint("RIGHT", close, "LEFT", 0, 0)
+    gear:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    gear:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+    gear:SetScript("OnClick", function()
+        RC.Options:Open()
+    end)
+    gear:SetScript("OnEnter", function(b)
+        GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+        GameTooltip:SetText("Settings")
+        GameTooltip:Show()
+    end)
+    gear:SetScript("OnLeave", GameTooltip_Hide)
+
     local previous
     for _, alertType in ipairs(RC.ALERT_ORDER) do
         local info = RC.ALERTS[alertType]
@@ -96,12 +111,14 @@ function Panel:Show()
     RC.db.showPanel = true
 end
 
-function Panel:Hide()
+function Panel:Hide(quiet)
     if self.frame then
         self.frame:Hide()
     end
     RC.db.showPanel = false
-    RC:Print(RC.COLORS.INFO .. "Panel hidden. Type /rc panel to bring it back.|r")
+    if not quiet then
+        RC:Print(RC.COLORS.INFO .. "Panel hidden. Type /rc panel to bring it back.|r")
+    end
 end
 
 function Panel:Toggle()

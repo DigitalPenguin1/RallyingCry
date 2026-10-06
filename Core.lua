@@ -373,6 +373,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         ApplyDefaults(RallyingCryDB, DEFAULTS)
         RC.db = RallyingCryDB
         C_ChatInfo.RegisterAddonMessagePrefix(RC.PREFIX)
+        RC.Options:Register()
     elseif event == "PLAYER_LOGIN" then
         RC.Panel:Create()
         if not IsInGuild() then
@@ -410,6 +411,7 @@ local function PrintUsage()
     print("  /rc clear - call off your alert")
     print("  /rc go - waypoint to the last alert")
     print("  /rc log - recent alerts")
+    print("  /rc settings - open the settings page")
     print("  /rc panel - show/hide the button panel")
     print("  /rc sound | banner | waypoint - toggle sound, screen banner, auto-waypoint")
     print("  /rc popup - toggle the Accept/Decline window for incoming alerts")
@@ -430,6 +432,8 @@ SlashCmdList["RALLYINGCRY"] = function(input)
         RC:WaypointToLastAlert()
     elseif cmd == "log" then
         RC:PrintLog()
+    elseif cmd == "settings" or cmd == "options" or cmd == "config" then
+        RC.Options:Open()
     elseif cmd == "panel" then
         RC.Panel:Toggle()
     elseif cmd == "sound" then
@@ -469,6 +473,11 @@ SlashCmdList["RALLYINGCRY"] = function(input)
     end
 end
 
-function RallyingCry_OnAddonCompartmentClick()
-    RC.Panel:Toggle()
+-- Left-click toggles the panel, right-click opens settings
+function RallyingCry_OnAddonCompartmentClick(_, buttonName)
+    if buttonName == "RightButton" then
+        RC.Options:Open()
+    else
+        RC.Panel:Toggle()
+    end
 end

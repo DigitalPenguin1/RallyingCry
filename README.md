@@ -93,4 +93,4 @@ Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddO
 
 ## License
 
-GPL-3.0. See [LICENSE](LICENSE).
+All rights reserved. You're welcome to use Rallying Cry and report bugs or ideas, but please don't copy, modify, or republish it. See [LICENSE](LICENSE).

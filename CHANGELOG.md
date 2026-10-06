@@ -1,7 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
+- Guild ganker list: shared with every guildmate running Rallying Cry, and caught up automatically when you log in
+- Gankers named in your Ganked! and Hunt alerts are added for you, with a report count and where they were last seen
+- Bounties: pledge gold on a ganker. The hunter claims it, the poster confirms the kill and mails the gold
+- Warning and sound when you target or mouse over a listed ganker
+- Only the person who added a ganker, or an officer (guild rank 0 or 1), can remove them
+- Open the list from the panel, Shift-click the minimap button, a keybinding, or `/rc kos`
 - About page in settings (ESC > Options > AddOns > Rallying Cry > About) with version, author, and copyable support and GitHub links
 - Minimap button (on by default): left-click toggles the panel, right-click opens settings, drag to move, tooltip shows the last alert. Turn it off in settings or with `/rc minimap`
 - Settings page under ESC > Options > AddOns > Rallying Cry. Open it with the gear on the panel, `/rc settings`, or right-click the addon compartment entry

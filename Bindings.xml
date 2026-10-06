@@ -17,4 +17,7 @@
   <Binding name="RALLYINGCRY_PANEL" Category="BINDING_HEADER_RALLYINGCRY">
     RallyingCry.Panel:Toggle()
   </Binding>
+  <Binding name="RALLYINGCRY_GANKERS" Category="BINDING_HEADER_RALLYINGCRY">
+    RallyingCry.GankerList:Toggle()
+  </Binding>
 </Bindings>

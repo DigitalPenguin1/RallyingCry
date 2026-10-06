@@ -1,6 +1,6 @@
 -- Rallying Cry - Minimap Button
--- Left-click toggles the button panel, right-click opens settings, drag to
--- move it around the minimap. The addon compartment entry shares the same
+-- Left-click toggles the button panel, Shift-click the ganker list,
+-- right-click opens settings, drag to move it around the minimap. The addon compartment entry shares the same
 -- click and tooltip handlers.
 
 local RC = RallyingCry
@@ -96,6 +96,8 @@ end
 function MinimapButton:OnClick(mouseButton)
     if mouseButton == "RightButton" then
         RC.Options:Open()
+    elseif IsShiftKeyDown() then
+        RC.GankerList:Toggle()
     else
         RC.Panel:Toggle()
     end
@@ -105,6 +107,7 @@ function MinimapButton:ShowTooltip(owner, draggable)
     GameTooltip:SetOwner(owner, "ANCHOR_LEFT")
     GameTooltip:SetText("Rallying Cry", RC.Theme.Color(RC.Theme.GOLD_LIGHT))
     GameTooltip:AddLine("Left-click: toggle alert panel", 0.8, 0.8, 0.8)
+    GameTooltip:AddLine("Shift-click: ganker list", 0.8, 0.8, 0.8)
     GameTooltip:AddLine("Right-click: settings", 0.8, 0.8, 0.8)
     if draggable then
         GameTooltip:AddLine("Drag: move", 0.8, 0.8, 0.8)

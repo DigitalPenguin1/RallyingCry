@@ -142,6 +142,14 @@ function RC:FlushPendingInvites()
     end
 end
 
+RC.MessageHandlers.JOIN = function(self, sender, subject, extra)
+    self:HandleResponse("JOIN", sender, RC.CleanText(subject), RC.CleanText(extra))
+end
+
+RC.MessageHandlers.NOINVITE = function(self, sender, subject, extra)
+    self:HandleResponse("NOINVITE", sender, RC.CleanText(subject), RC.CleanText(extra))
+end
+
 function RC:HandleResponse(kind, sender, subject, extra)
     -- Every guildmate hears every reply; only the one it's addressed to acts
     if subject ~= self:PlayerFullName() then

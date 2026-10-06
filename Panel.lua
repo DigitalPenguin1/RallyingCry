@@ -33,7 +33,8 @@ function Panel:Create()
         return
     end
 
-    local count = #RC.ALERT_ORDER
+    -- One button per alert, plus the ganker list
+    local count = #RC.ALERT_ORDER + 1
     local frame = CreateFrame("Frame", "RallyingCryPanel", UIParent, "BackdropTemplate")
     frame:SetSize(BUTTON_WIDTH + PADDING * 2,
         TITLE_HEIGHT + PADDING + count * BUTTON_HEIGHT + (count - 1) * BUTTON_GAP + PADDING)
@@ -99,6 +100,15 @@ function Panel:Create()
         button:SetScript("OnLeave", GameTooltip_Hide)
         previous = button
     end
+
+    local listButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    listButton:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+    RC.Theme.SkinButton(listButton)
+    listButton:SetPoint("TOP", previous, "BOTTOM", 0, -BUTTON_GAP)
+    listButton:SetText("|cffffd100Ganker List|r")
+    listButton:SetScript("OnClick", function()
+        RC.GankerList:Toggle()
+    end)
 
     RestorePosition(frame)
     self.frame = frame

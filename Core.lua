@@ -8,7 +8,7 @@ local addonName = ...
 RallyingCry = {}
 local RC = RallyingCry
 
-RC.VERSION = "0.2.0"
+RC.VERSION = "0.3.0"
 
 -- Addon message prefix (16 characters max)
 RC.PREFIX = "RallyingCry"
@@ -59,10 +59,9 @@ RC.ALERTS = {
 }
 RC.ALERT_ORDER = { "HELP", "WPVP", "HUNT", "CLEAR" }
 
--- Replies to an alert (see Invites.lua). Same wire format, different fields:
--- protocol ~ JOIN ~ alerter ~ flag        a guildmate accepted the alert
--- protocol ~ NOINVITE ~ responder ~ code   the alerter couldn't invite them
-RC.RESPONSES = { JOIN = true, NOINVITE = true }
+-- Handlers for every non-alert message, keyed by the second field. Each gets
+-- (RC, sender, ...remaining fields). Registered by Invites.lua and Gankers.lua.
+RC.MessageHandlers = {}
 
 local DEFAULTS = {
     sound = true,
@@ -77,6 +76,10 @@ local DEFAULTS = {
     panelPoint = nil,
     muted = {},
     log = {},
+    gankers = {},
+    bounties = {},
+    kosWarn = true,
+    kosAutoAdd = true,
 }
 
 -- Seconds between alerts from you, so one button mash doesn't spam the guild
@@ -95,6 +98,7 @@ BINDING_NAME_RALLYINGCRY_HUNT = "Send: Hunt Ganker"
 BINDING_NAME_RALLYINGCRY_CLEAR = "Send: All Clear"
 BINDING_NAME_RALLYINGCRY_WAYPOINT = "Waypoint to last alert"
 BINDING_NAME_RALLYINGCRY_PANEL = "Toggle alert panel"
+BINDING_NAME_RALLYINGCRY_GANKERS = "Toggle ganker list"
 
 ----------------------------------------------------------------------
 -- Helpers
@@ -136,6 +140,39 @@ function RC.CleanText(text, maxLen)
     return text
 end
 
+-- "Name-Realm" with the realm always filled in, so a ganker seen by
+-- guildmates on different connected realms is one entry. Nil if empty.
+function RC.NormalizeName(name)
+    name = RC.CleanText(name, 40)
+    local short, realm = name:match("^([^%-]+)%-?(.*)$")
+    if not short then
+        return nil
+    end
+    if short:byte(1) < 128 then
+        short = short:sub(1, 1):upper() .. short:sub(2):lower()
+    end
+    realm = realm:gsub("%s", "")
+    if realm == "" then
+        realm = GetNormalizedRealmName() or ""
+    end
+    return realm ~= "" and (short .. "-" .. realm) or short
+end
+
+-- Name for display: drops the realm when it's your own
+function RC.DisplayName(name)
+    return Ambiguate(name, "none")
+end
+
+-- Joins fields into a message, after the protocol number. Nil becomes empty.
+function RC.Pack(...)
+    local fields = { RC.PROTOCOL }
+    for i = 1, select("#", ...) do
+        local value = select(i, ...)
+        fields[i + 1] = value == nil and "" or tostring(value)
+    end
+    return table.concat(fields, FIELD_SEP)
+end
+
 function RC:PlayerFullName()
     local name = UnitName("player")
     local realm = GetNormalizedRealmName()
@@ -164,21 +201,21 @@ function RC:GetPlayerLocation()
     return mapID, x, y, zone, subzone
 end
 
--- Name of your current target if it's an attackable enemy player, otherwise
+-- Normalized name of a unit if it's an attackable enemy player, otherwise
 -- nil. Any of these unit queries can return a secret in combat, which reads
--- as "no target" here.
-function RC:GetHostileTargetName()
+-- as "no unit" here.
+function RC:GetHostileUnitName(unit)
     local ok, name = pcall(function()
-        local exists = UnitExists("target")
+        local exists = UnitExists(unit)
         if RC.IsSecret(exists) or not exists then
             return nil
         end
-        local isPlayer = UnitIsPlayer("target")
-        local canAttack = UnitCanAttack("player", "target")
+        local isPlayer = UnitIsPlayer(unit)
+        local canAttack = UnitCanAttack("player", unit)
         if RC.IsSecret(isPlayer) or RC.IsSecret(canAttack) or not isPlayer or not canAttack then
             return nil
         end
-        local unitName, realm = UnitName("target")
+        local unitName, realm = UnitName(unit)
         unitName = RC.Readable(unitName)
         if not unitName then
             return nil
@@ -187,9 +224,13 @@ function RC:GetHostileTargetName()
         if realm and realm ~= "" then
             unitName = unitName .. "-" .. realm
         end
-        return unitName
+        return RC.NormalizeName(unitName)
     end)
     return ok and name or nil
+end
+
+function RC:GetHostileTargetName()
+    return self:GetHostileUnitName("target")
 end
 
 ----------------------------------------------------------------------
@@ -283,7 +324,7 @@ function RC:SendAlert(alertType, note)
     -- "/rc hunt Gankname some note" names the ganker when you don't have them targeted
     if alertType == "HUNT" and not target and note ~= "" then
         local first, rest = note:match("^(%S+)%s*(.*)$")
-        target, note = first, rest
+        target, note = RC.NormalizeName(first), rest
     end
 
     local alert = {
@@ -313,7 +354,11 @@ function RC:SendAlert(alertType, note)
         self.activeAlert = { type = alertType, sentAt = now, responders = {} }
     end
     self:Print("Sent " .. info.color .. info.label .. "|r to your guild" ..
-        (target and (" (target: " .. target .. ")") or "") .. ".")
+        (target and (" (target: " .. RC.DisplayName(target) .. ")") or "") .. ".")
+
+    if target and self.db.kosAutoAdd and (alertType == "HELP" or alertType == "HUNT") then
+        self.Gankers:Report(target, subzone and (subzone .. ", " .. zone) or zone)
+    end
 end
 
 ----------------------------------------------------------------------
@@ -333,9 +378,9 @@ function RC:OnAddonMessage(prefix, text, channel, sender)
 
     self:Debug("recv " .. sender .. ": " .. text)
 
-    local _, kind, arg1, arg2 = strsplit(FIELD_SEP, text)
-    if RC.RESPONSES[kind] then
-        self:HandleResponse(kind, sender, RC.CleanText(arg1), RC.CleanText(arg2))
+    local handler = RC.MessageHandlers[(select(2, strsplit(FIELD_SEP, text)))]
+    if handler then
+        handler(self, sender, select(3, strsplit(FIELD_SEP, text)))
         return
     end
 
@@ -413,6 +458,10 @@ local function PrintUsage()
     print("  /rc clear - call off your alert")
     print("  /rc go - waypoint to the last alert")
     print("  /rc log - recent alerts")
+    print("  /rc kos - open the guild ganker list")
+    print("  /rc kos add <name> [reason] | /rc kos remove <name>")
+    print("  /rc bounty <name> <gold> - pledge gold on a ganker (0 withdraws)")
+    print("  /rc claim <name> - claim the bounties on a ganker you killed")
     print("  /rc settings - open the settings page")
     print("  /rc panel - show/hide the button panel")
     print("  /rc minimap - show/hide the minimap button")
@@ -435,6 +484,22 @@ SlashCmdList["RALLYINGCRY"] = function(input)
         RC:WaypointToLastAlert()
     elseif cmd == "log" then
         RC:PrintLog()
+    elseif cmd == "kos" or cmd == "gankers" or cmd == "list" then
+        local sub, args = rest:match("^(%S*)%s*(.-)$")
+        sub = sub:lower()
+        if sub == "add" then
+            local name, reason = args:match("^(%S*)%s*(.-)$")
+            RC.Gankers:Add(name, reason)
+        elseif sub == "remove" or sub == "del" then
+            RC.Gankers:Remove(args)
+        else
+            RC.GankerList:Toggle()
+        end
+    elseif cmd == "bounty" then
+        local name, gold = rest:match("^(%S*)%s*(%S*)")
+        RC.Gankers:PostBounty(name, gold)
+    elseif cmd == "claim" then
+        RC.Gankers:Claim(rest)
     elseif cmd == "settings" or cmd == "options" or cmd == "config" then
         RC.Options:Open()
     elseif cmd == "minimap" then

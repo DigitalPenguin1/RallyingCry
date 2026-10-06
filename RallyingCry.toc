@@ -2,7 +2,7 @@
 ## Title: |cffffd100Rallying Cry|r
 ## Notes: Call your guild for help when you're ganked, find world PvP, or hunt a ganker down
 ## Author: Relyk
-## Version: 0.2.0
+## Version: 0.3.0
 ## SavedVariables: RallyingCryDB
 ## IconTexture: Interface\Icons\Ability_Warrior_BattleShout
 ## AddonCompartmentFunc: RallyingCry_OnAddonCompartmentClick
@@ -13,6 +13,8 @@ Core.lua
 Theme.lua
 Alerts.lua
 Invites.lua
+Gankers.lua
+GankerList.lua
 Panel.lua
 Minimap.lua
 Options.lua

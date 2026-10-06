@@ -41,7 +41,11 @@ function RC.FormatAlert(alert)
         text = text .. " at " .. RC.FormatLocation(alert)
     end
     if alert.target then
-        text = text .. ". Ganker: " .. RC.COLORS.ERROR .. alert.target .. "|r"
+        text = text .. ". Ganker: " .. RC.COLORS.ERROR .. RC.DisplayName(alert.target) .. "|r"
+        local _, bounty = RC.Gankers:ActiveBounties(RC.NormalizeName(alert.target) or alert.target)
+        if bounty > 0 then
+            text = text .. " (bounty " .. RC.FormatGold(bounty) .. ")"
+        end
     end
     if alert.note then
         text = text .. ". \"" .. alert.note .. "\""

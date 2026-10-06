@@ -26,6 +26,18 @@ Ganked!, World PvP, and Hunt Ganker alerts pop up a window for guildmates with *
 
 The window closes on its own after 60 seconds, or when the sender calls All Clear. If you're already in a group you can't be invited, but the sender still hears you're on the way. If they can't invite you (they aren't group leader, or the raid is full), you get told why and can follow the waypoint.
 
+## Ganker List and Bounties
+
+The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the same list, and it catches you up on anything you missed when you log in.
+
+- **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker** or type `/rc kos add Name reason`
+- **Removing**: only the person who added them, or an officer, can take someone off. Officers are guild rank 0 (Guild Master) and 1
+- **Bounties**: click **Bounty** on a row, or `/rc bounty Name 50`, to pledge 50 gold. Several guildmates can stack bounties on the same ganker. `/rc bounty Name 0` withdraws yours
+- **Claiming**: kill a ganker with a bounty, then click **Claim** or type `/rc claim Name`. Each poster gets a Confirm/Deny window (even if they were offline when you claimed). Confirm reminds them to mail you the gold
+- **Warnings**: target or mouse over a listed ganker and you get a chat warning and a sound, with their bounty
+
+The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
+
 ## Features
 
 - **Settings page**: ESC > Options > AddOns > Rallying Cry, the gear on the panel, `/rc settings`, or right-click Rallying Cry in the addon compartment. Every option below is there as a checkbox
@@ -46,6 +58,11 @@ The window closes on its own after 60 seconds, or when the sender calls All Clea
 /rc clear               call off your alert
 /rc go                  waypoint to the last alert
 /rc log                 recent alerts
+/rc kos                 open the ganker list
+/rc kos add <name> [reason]
+/rc kos remove <name>
+/rc bounty <name> <gold> pledge gold on a ganker (0 withdraws)
+/rc claim <name>        claim the bounties on a ganker you killed
 /rc settings            open the settings page
 /rc panel               show/hide the button panel
 /rc minimap             show/hide the minimap button
@@ -67,6 +84,7 @@ Forever runs the modern addon API with Midnight's restrictions, which shapes wha
 - **No automatic gank detection.** The combat log is blocked for addons, so you press the button yourself.
 - **Target names can be hidden in combat.** If the game hides your target's name, the alert goes out without it. Use `/rc hunt Name` to name the ganker by hand.
 - **No coordinates inside instances.** The game hides your position there. The alert still sends the zone name.
+- **Ganker warnings may not fire in combat**, for the same reason.
 - Guildmates only see alerts if they have Rallying Cry installed.
 
 ## Install

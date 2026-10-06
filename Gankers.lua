@@ -149,8 +149,8 @@ local function EncodeGuild(g, relay)
         g.updated, g.removedBy or "", RC.CleanText(g.reason, 60))
 end
 
--- Guild names are unique per realm and rarely clash across realms, so the
--- list matches on the name alone
+-- Matches on the guild name alone. Forever has no realms, and elsewhere
+-- guild names rarely clash across connected realms.
 local function GuildKey(name)
     return name:lower()
 end

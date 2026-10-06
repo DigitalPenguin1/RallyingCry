@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Slash commands that take a name (`/rc hunt`, `/rc kos add`, `/rc bounty`) read the full first name and surname
+- KOS guilds no longer save the shard name the game reports as a realm, since Forever has no realms
 - Fix: Forever surnames. Players are now identified by first name + surname like the game does, instead of mistaking the surname for a realm. This fixes the GM not being recognized as an officer, your own alerts popping up for you, and enemy names saved as "Name-Surname"
 
 ## 0.4.0

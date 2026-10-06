@@ -280,7 +280,9 @@ function RC:GetHostileUnitName(unit)
     return ok and name or nil
 end
 
--- Guild name and realm of a unit, or nil. Can be hidden in combat.
+-- Guild name of a unit (plus its realm outside Forever), or nil. Can be
+-- hidden in combat. Forever has no realms, only playstyle shards, so the
+-- shard label the game returns there isn't passed on.
 function RC:GetUnitGuild(unit)
     local ok, guild, _, _, realm = pcall(GetGuildInfo, unit)
     if not ok then
@@ -290,7 +292,24 @@ function RC:GetUnitGuild(unit)
     if not guild or guild == "" then
         return nil
     end
+    if RC.UsesSurnames() then
+        return guild
+    end
     return guild, RC.Readable(realm)
+end
+
+-- Splits "<name> <rest>". A Forever name is two words (first name and
+-- surname), so it takes two words there and one elsewhere.
+function RC.SplitNameArg(text)
+    text = text or ""
+    local name, rest
+    if RC.UsesSurnames() then
+        name, rest = text:match("^%s*(%S+%s+%S+)%s*(.-)%s*$")
+    end
+    if not name then
+        name, rest = text:match("^%s*(%S+)%s*(.-)%s*$")
+    end
+    return name, rest or ""
 end
 
 function RC:GetHostileTargetName()
@@ -407,8 +426,8 @@ function RC:SendAlert(alertType, note)
 
     -- "/rc hunt Gankname some note" names the ganker when you don't have them targeted
     if alertType == "HUNT" and not target and note ~= "" then
-        local first, rest = note:match("^(%S+)%s*(.*)$")
-        target, note = RC.NormalizeName(first), rest
+        local name, rest = RC.SplitNameArg(note)
+        target, note = RC.NormalizeName(name), rest
     end
 
     local alert = {
@@ -576,7 +595,7 @@ SlashCmdList["RALLYINGCRY"] = function(input)
         local sub, args = rest:match("^(%S*)%s*(.-)$")
         sub = sub:lower()
         if sub == "add" then
-            local name, reason = args:match("^(%S*)%s*(.-)$")
+            local name, reason = RC.SplitNameArg(args)
             RC.Gankers:Add(name, reason)
         elseif sub == "remove" or sub == "del" then
             RC.Gankers:Remove(args)
@@ -596,8 +615,9 @@ SlashCmdList["RALLYINGCRY"] = function(input)
             RC.GankerList:Toggle()
         end
     elseif cmd == "bounty" then
-        local name, gold = rest:match("^(%S*)%s*(%S*)")
-        RC.Gankers:PostBounty(name, gold)
+        -- The gold amount is the last word, so names of any length work
+        local name, gold = rest:match("^(.-)%s+(%d+)%s*$")
+        RC.Gankers:PostBounty(name or rest, gold)
     elseif cmd == "claim" then
         RC.Gankers:Claim(rest)
     elseif cmd == "settings" or cmd == "options" or cmd == "config" then

@@ -62,6 +62,8 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 
 ## All commands
 
+Forever characters have a first name and a surname. Where a command takes a name, type both, like `/rc hunt Gankzor Blackhand camping the docks`.
+
 ```
 /rc gank [note]         you're being ganked
 /rc wpvp [note]         world PvP here

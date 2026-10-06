@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Fix: characters with a surname ("Fanielraal Stormblessed") weren't recognized as officers, because the second word got lowercased. Names now keep their capitals
+- Fix: Forever surnames. Players are now identified by first name + surname like the game does, instead of mistaking the surname for a realm. This fixes the GM not being recognized as an officer, your own alerts popping up for you, and enemy names saved as "Name-Surname"
 
 ## 0.4.0
 

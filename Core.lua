@@ -164,10 +164,22 @@ function RC.CleanText(text, maxLen)
     return text
 end
 
--- "Name-Realm" with the realm always filled in, so a ganker seen by
--- guildmates on different connected realms is one entry. Nil if empty.
--- Forever names can have a surname ("Fanielraal Stormblessed"), so only the
--- first letter of each word is capitalized and the rest is left as typed.
+-- Forever is realmless: every character has a first name and a surname, and
+-- that pair is what's unique. UnitName returns the surname where other
+-- clients return the realm. Blizzard joins the two with this separator.
+local function SurnameSeparator()
+    local consts = Constants and Constants.CharacterNameSeparatorConsts
+    return consts and consts.CHARACTERNAME_SURNAME_SEPARATOR or " "
+end
+
+function RC.UsesSurnames()
+    return RegionalUniqueNamesEnabled ~= nil and RegionalUniqueNamesEnabled() == true
+end
+
+-- One name format for every comparison. On Forever: "First Surname", with any
+-- realm suffix dropped. Elsewhere: "Name-Realm" with the realm filled in, so
+-- connected realms don't split one player into two entries. Only the first
+-- letter of each word is capitalized. Nil if empty.
 function RC.NormalizeName(name)
     name = RC.CleanText(name, 50)
     local short, realm = name:match("^([^%-]+)%-?(.*)$")
@@ -183,6 +195,9 @@ function RC.NormalizeName(name)
     end)
     if short == "" then
         return nil
+    end
+    if RC.UsesSurnames() then
+        return short
     end
     realm = realm:gsub("%s", "")
     if realm == "" then
@@ -206,9 +221,23 @@ function RC.Pack(...)
     return table.concat(fields, FIELD_SEP)
 end
 
+-- Normalized full name of a unit, or nil if it's unknown or hidden
+function RC:UnitFullName(unit)
+    local name, second = UnitName(unit)
+    name, second = RC.Readable(name), RC.Readable(second)
+    if not name or name == "" then
+        return nil
+    end
+    if second and second ~= "" then
+        -- second is the surname on Forever, the realm everywhere else
+        name = name .. (RC.UsesSurnames() and SurnameSeparator() or "-") .. second
+    end
+    return RC.NormalizeName(name)
+end
+
 function RC:PlayerFullName()
     if not self.fullName then
-        self.fullName = RC.NormalizeName(UnitName("player"))
+        self.fullName = self:UnitFullName("player")
     end
     return self.fullName
 end
@@ -246,16 +275,7 @@ function RC:GetHostileUnitName(unit)
         if RC.IsSecret(isPlayer) or RC.IsSecret(canAttack) or not isPlayer or not canAttack then
             return nil
         end
-        local unitName, realm = UnitName(unit)
-        unitName = RC.Readable(unitName)
-        if not unitName then
-            return nil
-        end
-        realm = RC.Readable(realm)
-        if realm and realm ~= "" then
-            unitName = unitName .. "-" .. realm
-        end
-        return RC.NormalizeName(unitName)
+        return RC:UnitFullName(unit)
     end)
     return ok and name or nil
 end

@@ -81,6 +81,88 @@ function Options:Register()
         function(value) RC.MinimapButton:SetShown(value) end)
 
     Settings.RegisterAddOnCategory(category)
+    self:RegisterAbout(category)
+end
+
+----------------------------------------------------------------------
+-- About page
+----------------------------------------------------------------------
+
+local SUPPORT_URL = "https://buymeacoffee.com/relyk22"
+local GITHUB_URL = "https://github.com/DigitalPenguin1/RallyingCry"
+
+-- WoW can't open links, so show them in a box the player can copy from.
+-- Typing into it just puts the URL back.
+local function CreateLinkBox(parent, url)
+    local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+    box:SetSize(320, 20)
+    box:SetAutoFocus(false)
+    box:SetText(url)
+    box:SetCursorPosition(0)
+    box:SetScript("OnTextChanged", function(b, userInput)
+        if userInput then
+            b:SetText(url)
+            b:HighlightText()
+        end
+    end)
+    box:SetScript("OnEditFocusGained", function(b)
+        b:HighlightText()
+    end)
+    box:SetScript("OnEditFocusLost", function(b)
+        b:HighlightText(0, 0)
+    end)
+    box:SetScript("OnEscapePressed", box.ClearFocus)
+    return box
+end
+
+local function AddText(parent, anchor, text, font, gap, r, g, b)
+    local line = parent:CreateFontString(nil, "ARTWORK", font or "GameFontHighlight")
+    line:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -(gap or 8))
+    line:SetWidth(560)
+    line:SetJustifyH("LEFT")
+    line:SetText(text)
+    if r then
+        line:SetTextColor(r, g, b)
+    end
+    return line
+end
+
+function Options:RegisterAbout(category)
+    if not Settings.RegisterCanvasLayoutSubcategory then
+        return
+    end
+
+    local frame = CreateFrame("Frame")
+    local Theme = RC.Theme
+
+    local title = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
+    title:SetPoint("TOPLEFT", 16, -16)
+    title:SetText("Rallying Cry")
+    title:SetTextColor(Theme.Color(Theme.GOLD_LIGHT))
+
+    local version = AddText(frame, title, "Version: |cffffd100" .. RC.VERSION .. "|r", "GameFontHighlight", 12)
+    local author = AddText(frame, version, "Developed by: |cff00ccffRelyk|r", "GameFontHighlight", 4)
+
+    local thanks = AddText(frame, author, "Thank you for using Rallying Cry!", "GameFontNormalLarge", 20)
+    local about = AddText(frame, thanks,
+        "Call your guild for backup in WoW: Forever. Send an alert when you're ganked, find world PvP, " ..
+        "or want a party to hunt a ganker down, and guildmates can Accept to join your group with a waypoint to you. " ..
+        "Type /rc in chat for every command.", "GameFontHighlight", 8)
+
+    local support = AddText(frame, about, "If you enjoy this addon and want to support development:", "GameFontNormal", 20)
+    local coffee = AddText(frame, support, "Buy me a coffee at:", "GameFontHighlight", 8, 0, 1, 0)
+    local coffeeBox = CreateLinkBox(frame, SUPPORT_URL)
+    coffeeBox:SetPoint("TOPLEFT", coffee, "BOTTOMLEFT", 6, -4)
+
+    local bugs = AddText(frame, coffeeBox, "Found a bug or have an idea? Open an issue on GitHub:", "GameFontHighlight", 16)
+    bugs:SetPoint("TOPLEFT", coffeeBox, "BOTTOMLEFT", -6, -16)
+    local githubBox = CreateLinkBox(frame, GITHUB_URL)
+    githubBox:SetPoint("TOPLEFT", bugs, "BOTTOMLEFT", 6, -4)
+
+    AddText(frame, githubBox, "Click a link and press Ctrl+C to copy it.", "GameFontDisableSmall", 8)
+        :SetPoint("TOPLEFT", githubBox, "BOTTOMLEFT", -6, -8)
+
+    Settings.RegisterCanvasLayoutSubcategory(category, frame, "About")
 end
 
 function Options:Open()

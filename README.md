@@ -39,10 +39,11 @@ The window closes on its own after 60 seconds, or when the sender calls All Clea
 The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the same list, and it catches you up on anything you missed when you log in.
 
 - **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker**, which opens a form for the name (or Use Target), an optional reason, and an optional bounty, or type `/rc kos add Name reason`
-- **Removing**: only the person who added them, or an officer, can take someone off. Officers are guild rank 0 (Guild Master) and 1
+- **Removing**: only the person who added them, or an officer, can take someone off. Officers are any rank with the guild's **Remove Member** permission
 - **Bounties**: click **Bounty** on a row, or `/rc bounty Name 50`, to pledge 50 gold. Several guildmates can stack bounties on the same ganker. `/rc bounty Name 0` withdraws yours
 - **Claiming**: kill a ganker with a bounty, then click **Claim** or type `/rc claim Name`. Each poster gets a Confirm/Deny window (even if they were offline when you claimed). Confirm reminds them to mail you the gold
-- **Warnings**: target or mouse over a listed ganker and you get a chat warning and a sound, with their bounty
+- **Warnings**: target or mouse over a listed ganker, or a member of a KOS guild, and you get a chat warning and a sound, with their bounty
+- **KOS guilds**: officers can put a whole guild on KOS. Every member then counts as a ganker without being added one by one. Switch the list window to **Guilds**, click **Add Guild** (it fills in your target's guild), or type `/rc kos guild add Guild Name - reason`. Alerts show the ganker's guild and flag KOS guilds
 
 The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
 
@@ -71,6 +72,8 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 /rc kos                 open the ganker list
 /rc kos add <name> [reason]
 /rc kos remove <name>
+/rc kos guild add <guild> [- reason]   officers only
+/rc kos guild remove <guild>           officers only
 /rc bounty <name> <gold> pledge gold on a ganker (0 withdraws)
 /rc claim <name>        claim the bounties on a ganker you killed
 /rc settings            open the settings page

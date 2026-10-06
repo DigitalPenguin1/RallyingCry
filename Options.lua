@@ -68,7 +68,7 @@ function Options:Register()
     AddDBCheckbox(category, "kosAutoAdd", "Add gankers from your alerts",
         "When your Ganked! or Hunt alert names an enemy player, add them to the guild ganker list.")
     AddDBCheckbox(category, "kosWarn", "Warn when you see a listed ganker",
-        "Chat warning and a sound when you target or mouse over someone on the list. Names can be hidden in combat, so this may not fire mid-fight.")
+        "Chat warning and a sound when you target or mouse over someone on the list, or a member of a KOS guild. Names can be hidden in combat, so this may not fire mid-fight.")
 
     AddHeader(layout, "Panel & Minimap")
     AddCheckbox(category, "showPanel", "Show button panel",

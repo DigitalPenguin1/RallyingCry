@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
+
+- KOS guilds: officers can put a whole guild on KOS. Every member counts as a ganker, and you're warned when you target or mouse over one
+- The ganker list window has a Gankers | Guilds toggle, and Add Guild can fill in your target's guild
+- Alerts and ganker entries show the ganker's guild, marked if it's a KOS guild
+- Officers are now ranks with the guild's Remove Member permission, instead of rank 0 and 1
+- Long alert notes are trimmed to fit WoW's message limit instead of failing to send, without cutting accented letters in half
 
 - Add Ganker is now a form with separate Name, Reason, and Bounty fields, plus a Use Target button
 - The alert banner shows below the Accept/Decline window instead of behind it, and fades out after a few seconds

@@ -8,7 +8,7 @@ local addonName = ...
 RallyingCry = {}
 local RC = RallyingCry
 
-RC.VERSION = "0.3.0"
+RC.VERSION = "0.4.0"
 
 -- Addon message prefix (16 characters max)
 RC.PREFIX = "RallyingCry"
@@ -78,6 +78,7 @@ local DEFAULTS = {
     log = {},
     gankers = {},
     bounties = {},
+    kosGuilds = {},
     kosWarn = true,
     kosAutoAdd = true,
 }
@@ -93,6 +94,9 @@ RC.ACTIVE_ALERT_WINDOW = 600
 local NOTE_MAX = 100
 
 local FIELD_SEP = "~"
+
+-- WoW drops addon messages longer than this
+RC.MAX_MESSAGE = 255
 
 -- Keybinding labels (ESC > Options > Keybindings > AddOns)
 BINDING_HEADER_RALLYINGCRY = "Rallying Cry"
@@ -133,13 +137,29 @@ function RC.Readable(value)
 end
 
 -- Strip anything that could break the wire format or inject chat escape codes
+-- Drops a multi-byte character that a byte-length cut left half finished
+local function TrimPartialUTF8(text)
+    local i = #text
+    while i > 0 and text:byte(i) >= 128 and text:byte(i) < 192 do
+        i = i - 1
+    end
+    if i > 0 and text:byte(i) >= 192 then
+        local lead = text:byte(i)
+        local length = lead >= 240 and 4 or lead >= 224 and 3 or 2
+        if #text - i + 1 < length then
+            return text:sub(1, i - 1)
+        end
+    end
+    return text
+end
+
 function RC.CleanText(text, maxLen)
     if type(text) ~= "string" then
         return ""
     end
     text = text:gsub("[|" .. FIELD_SEP .. "]", ""):gsub("^%s+", ""):gsub("%s+$", "")
     if maxLen and #text > maxLen then
-        text = text:sub(1, maxLen)
+        text = TrimPartialUTF8(text:sub(1, maxLen))
     end
     return text
 end
@@ -233,6 +253,19 @@ function RC:GetHostileUnitName(unit)
     return ok and name or nil
 end
 
+-- Guild name and realm of a unit, or nil. Can be hidden in combat.
+function RC:GetUnitGuild(unit)
+    local ok, guild, _, _, realm = pcall(GetGuildInfo, unit)
+    if not ok then
+        return nil
+    end
+    guild = RC.Readable(guild)
+    if not guild or guild == "" then
+        return nil
+    end
+    return guild, RC.Readable(realm)
+end
+
 function RC:GetHostileTargetName()
     return self:GetHostileUnitName("target")
 end
@@ -243,22 +276,28 @@ end
 -- Coordinates are 0-1 with 4 decimals. Empty fields mean unknown.
 ----------------------------------------------------------------------
 
+-- The note gets whatever room is left under the message limit. The guild
+-- field is last so clients older than it still read everything before it.
 function RC.Encode(alert)
-    return table.concat({
+    local fields = {
         RC.PROTOCOL,
         alert.type,
         alert.mapID or "",
         alert.x and string.format("%.4f", alert.x) or "",
         alert.y and string.format("%.4f", alert.y) or "",
-        RC.CleanText(alert.zone, 60),
-        RC.CleanText(alert.subzone, 60),
-        RC.CleanText(alert.target, 60),
-        RC.CleanText(alert.note, NOTE_MAX),
-    }, FIELD_SEP)
+        RC.CleanText(alert.zone, 40),
+        RC.CleanText(alert.subzone, 40),
+        RC.CleanText(alert.target, 40),
+        "",
+        RC.CleanText(alert.targetGuild, 30),
+    }
+    local room = RC.MAX_MESSAGE - #table.concat(fields, FIELD_SEP)
+    fields[9] = RC.CleanText(alert.note, math.min(NOTE_MAX, room))
+    return table.concat(fields, FIELD_SEP)
 end
 
 function RC.Decode(text)
-    local protocol, alertType, mapID, x, y, zone, subzone, target, note = strsplit(FIELD_SEP, text)
+    local protocol, alertType, mapID, x, y, zone, subzone, target, note, targetGuild = strsplit(FIELD_SEP, text)
     protocol = tonumber(protocol)
     if not protocol or not RC.ALERTS[alertType] then
         return nil
@@ -277,12 +316,17 @@ function RC.Decode(text)
         subzone = orNil(subzone),
         target = orNil(target),
         note = orNil(note),
+        targetGuild = orNil(targetGuild),
     }
 end
 
 -- C_ChatInfo.SendAddonMessage returns an Enum.SendAddonMessageResult on the
 -- modern API. Returns true on success, or false plus a reason.
 function RC:SendGuild(text)
+    if #text > RC.MAX_MESSAGE then
+        self:Debug("message too long to send (" .. #text .. "): " .. text)
+        return false, "message too long"
+    end
     if C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() then
         return false, "the game is blocking addon messages right now"
     end
@@ -331,6 +375,7 @@ function RC:SendAlert(alertType, note)
 
     local mapID, x, y, zone, subzone = self:GetPlayerLocation()
     local target = alertType ~= "CLEAR" and self:GetHostileTargetName() or nil
+    local targetGuild = target and self:GetUnitGuild("target")
     note = RC.CleanText(note, NOTE_MAX)
 
     -- "/rc hunt Gankname some note" names the ganker when you don't have them targeted
@@ -347,6 +392,7 @@ function RC:SendAlert(alertType, note)
         zone = zone,
         subzone = subzone,
         target = target,
+        targetGuild = targetGuild,
         note = note,
     }
 
@@ -369,7 +415,7 @@ function RC:SendAlert(alertType, note)
         (target and (" (target: " .. RC.DisplayName(target) .. ")") or "") .. ".")
 
     if target and self.db.kosAutoAdd and (alertType == "HELP" or alertType == "HUNT") then
-        self.Gankers:Report(target, subzone and (subzone .. ", " .. zone) or zone)
+        self.Gankers:Report(target, subzone and (subzone .. ", " .. zone) or zone, targetGuild)
     end
 end
 
@@ -472,6 +518,7 @@ local function PrintUsage()
     print("  /rc log - recent alerts")
     print("  /rc kos - open the guild ganker list")
     print("  /rc kos add <name> [reason] | /rc kos remove <name>")
+    print("  /rc kos guild add <guild> [- reason] | /rc kos guild remove <guild>")
     print("  /rc bounty <name> <gold> - pledge gold on a ganker (0 withdraws)")
     print("  /rc claim <name> - claim the bounties on a ganker you killed")
     print("  /rc settings - open the settings page")
@@ -504,6 +551,18 @@ SlashCmdList["RALLYINGCRY"] = function(input)
             RC.Gankers:Add(name, reason)
         elseif sub == "remove" or sub == "del" then
             RC.Gankers:Remove(args)
+        elseif sub == "guild" then
+            -- Guild names have spaces, so a reason goes after " - "
+            local action, rest2 = args:match("^(%S*)%s*(.-)$")
+            local guild, reason = rest2:match("^(.-)%s+%-%s+(.*)$")
+            guild = guild or rest2
+            if action:lower() == "add" then
+                RC.Gankers:AddGuild(guild, nil, reason)
+            elseif action:lower() == "remove" or action:lower() == "del" then
+                RC.Gankers:RemoveGuild(guild)
+            else
+                RC:Print("Usage: /rc kos guild add <guild name> [- reason]  |  /rc kos guild remove <guild name>")
+            end
         else
             RC.GankerList:Toggle()
         end

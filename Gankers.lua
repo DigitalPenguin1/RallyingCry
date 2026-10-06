@@ -1,6 +1,6 @@
 -- Rallying Cry - Ganker List and Bounties
 -- A guild-shared list of gankers, with gold bounties guildmates can pledge on
--- them. The addon can't hold or move gold: a bounty is a pledge, the hunter
+-- them, plus a list of KOS guilds whose members all count as gankers. The addon can't hold or move gold: a bounty is a pledge, the hunter
 -- claims it, the poster confirms the kill and mails the gold themselves.
 --
 -- Every ganker and every bounty is a record stamped with server time. Changes
@@ -12,9 +12,12 @@ local RC = RallyingCry
 local Gankers = {}
 RC.Gankers = Gankers
 
--- Guild rank indexes that count as officers (0 is the Guild Master). Officers
--- can remove anyone from the list; everyone else only their own additions.
-local OFFICER_RANK_MAX = 1
+-- Officers are ranks with the guild's "Remove Member" permission. If a client
+-- can't read rank permissions, rank indexes up to this one count instead
+-- (0 is the Guild Master). Officers can remove anyone from the ganker list,
+-- and only officers can add or remove KOS guilds.
+local REMOVE_MEMBER_FLAG = 8
+local OFFICER_RANK_FALLBACK = 1
 
 -- Removed gankers and finished bounties are dropped after this many seconds
 local PURGE_AFTER = 30 * 24 * 60 * 60
@@ -86,8 +89,24 @@ end
 -- Guild ranks
 ----------------------------------------------------------------------
 
+local officerRanks = {}
+
+-- rankIndex is 0-based (roster), rank flags are looked up 1-based
+local function RankIsOfficer(rankIndex)
+    if officerRanks[rankIndex] == nil then
+        local ok, flags = pcall(C_GuildInfo.GuildControlGetRankFlags, rankIndex + 1)
+        if ok and type(flags) == "table" and flags[REMOVE_MEMBER_FLAG] ~= nil then
+            officerRanks[rankIndex] = flags[REMOVE_MEMBER_FLAG] == true
+        else
+            officerRanks[rankIndex] = rankIndex <= OFFICER_RANK_FALLBACK
+        end
+    end
+    return officerRanks[rankIndex]
+end
+
 function Gankers:RefreshRoster()
     wipe(rankByName)
+    wipe(officerRanks)
     for i = 1, GetNumGuildMembers() do
         local name, _, rankIndex = GetGuildRosterInfo(i)
         name = name and RC.NormalizeName(name)
@@ -98,8 +117,12 @@ function Gankers:RefreshRoster()
 end
 
 function Gankers:IsOfficer(name)
+    -- Sync messages can arrive before the first roster update
+    if next(rankByName) == nil then
+        self:RefreshRoster()
+    end
     local rank = rankByName[name]
-    return rank ~= nil and rank <= OFFICER_RANK_MAX
+    return rank ~= nil and RankIsOfficer(rank)
 end
 
 function Gankers:CanRemove(name, ganker)
@@ -108,15 +131,28 @@ end
 
 ----------------------------------------------------------------------
 -- Wire format
--- KOS  ~ relay ~ name ~ addedBy ~ reports ~ lastSeen ~ updated ~ removedBy ~ zone ~ reason
+-- KOS  ~ relay ~ name ~ addedBy ~ reports ~ lastSeen ~ updated ~ removedBy ~ zone ~ reason ~ guild
 -- BNTY ~ relay ~ name ~ poster ~ gold ~ status ~ claimant ~ updated
+-- KOSG ~ relay ~ guild ~ realm ~ addedBy ~ updated ~ removedBy ~ reason
 -- relay is "r" when the record is being passed along in a sync, empty when
 -- the sender made the change themselves.
 ----------------------------------------------------------------------
 
 local function EncodeGanker(g, relay)
     return RC.Pack("KOS", relay and "r" or "", g.name, g.addedBy, g.reports or 0, g.lastSeen or "",
-        g.updated, g.removedBy or "", RC.CleanText(g.zone, 40), RC.CleanText(g.reason, 60))
+        g.updated, g.removedBy or "", RC.CleanText(g.zone, 40), RC.CleanText(g.reason, 50),
+        RC.CleanText(g.guild, 30))
+end
+
+local function EncodeGuild(g, relay)
+    return RC.Pack("KOSG", relay and "r" or "", RC.CleanText(g.name, 30), g.realm or "", g.addedBy,
+        g.updated, g.removedBy or "", RC.CleanText(g.reason, 60))
+end
+
+-- Guild names are unique per realm and rarely clash across realms, so the
+-- list matches on the name alone
+local function GuildKey(name)
+    return name:lower()
 end
 
 local function EncodeBounty(b, relay)
@@ -140,6 +176,17 @@ function Gankers:MergeGanker(record)
         return false
     end
     RC.db.gankers[record.name] = record
+    Refresh()
+    return true
+end
+
+function Gankers:MergeGuild(record)
+    local key = GuildKey(record.name)
+    local current = RC.db.kosGuilds[key]
+    if current and current.updated >= record.updated then
+        return false
+    end
+    RC.db.kosGuilds[key] = record
     Refresh()
     return true
 end
@@ -190,6 +237,9 @@ local function Publish(kind, record)
     if kind == "KOS" then
         Gankers:MergeGanker(record)
         RC:SendGuild(EncodeGanker(record))
+    elseif kind == "KOSG" then
+        Gankers:MergeGuild(record)
+        RC:SendGuild(EncodeGuild(record))
     else
         Gankers:MergeBounty(record, false)
         RC:SendGuild(EncodeBounty(record))
@@ -213,7 +263,7 @@ function Gankers:Get(name)
 end
 
 -- Sighting from one of our own alerts: add them, or bump their report count
-function Gankers:Report(name, zone)
+function Gankers:Report(name, zone, guild)
     name = RC.NormalizeName(name)
     if not name or not IsInGuild() then
         return
@@ -226,6 +276,7 @@ function Gankers:Report(name, zone)
         reports = (current and current.reports or 0) + 1,
         lastSeen = Now(),
         zone = zone,
+        guild = guild or (current and current.guild),
         updated = NextStamp(RC.db.gankers[name]),
     })
 end
@@ -248,6 +299,7 @@ function Gankers:Add(name, reason)
         reports = current and current.reports or 0,
         lastSeen = current and current.lastSeen,
         zone = current and current.zone,
+        guild = current and current.guild,
         updated = NextStamp(RC.db.gankers[name]),
     })
     RC:Print((current and "Updated " or "Added ") .. RC.COLORS.ERROR .. RC.DisplayName(name) ..
@@ -271,6 +323,73 @@ function Gankers:Remove(name)
     record.updated = NextStamp(current)
     Publish("KOS", record)
     RC:Print("Removed " .. RC.DisplayName(name) .. " from the ganker list.")
+end
+
+-- Listed (and not removed) KOS guild record, or nil
+function Gankers:GetGuild(name)
+    local guild = name and RC.db.kosGuilds[GuildKey(name)]
+    if guild and not guild.removedBy then
+        return guild
+    end
+end
+
+function Gankers:AddGuild(name, realm, reason)
+    name = OrNil(RC.CleanText(name, 30))
+    if not name then
+        RC:Print("Usage: /rc kos guild add <guild name> [- reason]")
+        return
+    end
+    if not RequireGuild() then
+        return
+    end
+    if not self:IsOfficer(Me()) then
+        RC:Print(RC.COLORS.WARNING .. "Only officers can add KOS guilds.|r")
+        return
+    end
+    local myGuild = GetGuildInfo("player")
+    if myGuild and GuildKey(myGuild) == GuildKey(name) then
+        RC:Print(RC.COLORS.WARNING .. "That's your own guild.|r")
+        return
+    end
+    reason = OrNil(reason)
+    local current = self:GetGuild(name)
+    Publish("KOSG", {
+        name = current and current.name or name,
+        realm = realm or (current and current.realm),
+        addedBy = current and current.addedBy or Me(),
+        reason = reason or (current and current.reason),
+        updated = NextStamp(RC.db.kosGuilds[GuildKey(name)]),
+    })
+    RC:Print((current and "Updated " or "Added ") .. RC.COLORS.ERROR .. "<" .. name .. ">|r " ..
+        (current and "on" or "to") .. " the KOS guild list. Every member now counts as a ganker.")
+end
+
+function Gankers:RemoveGuild(name)
+    local current = self:GetGuild(OrNil(name))
+    if not current then
+        RC:Print("<" .. (name or "") .. "> isn't on the KOS guild list.")
+        return
+    end
+    if not self:IsOfficer(Me()) then
+        RC:Print(RC.COLORS.WARNING .. "Only officers can remove KOS guilds.|r")
+        return
+    end
+    local record = CopyTable(current)
+    record.removedBy = Me()
+    record.updated = NextStamp(current)
+    Publish("KOSG", record)
+    RC:Print("Removed <" .. current.name .. "> from the KOS guild list.")
+end
+
+function Gankers:SortedGuilds()
+    local rows = {}
+    for _, guild in pairs(RC.db.kosGuilds) do
+        if not guild.removedBy then
+            table.insert(rows, guild)
+        end
+    end
+    table.sort(rows, function(a, b) return a.name:lower() < b.name:lower() end)
+    return rows
 end
 
 -- Pledge gold on a ganker, or withdraw your bounty with 0
@@ -467,7 +586,7 @@ end
 -- Receiving
 ----------------------------------------------------------------------
 
-RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, lastSeen, updated, removedBy, zone, reason)
+RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, lastSeen, updated, removedBy, zone, reason, guild)
     local record = {
         name = RC.NormalizeName(name),
         addedBy = OrNil(addedBy),
@@ -477,6 +596,7 @@ RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, last
         removedBy = OrNil(removedBy),
         zone = OrNil(zone),
         reason = OrNil(reason),
+        guild = OrNil(guild),
     }
     if not (record.name and record.addedBy and record.updated) then
         return
@@ -517,6 +637,31 @@ RC.MessageHandlers.BNTY = function(_, sender, relay, name, poster, gold, status,
     Gankers:MergeBounty(record, relay ~= "r")
 end
 
+RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updated, removedBy, reason)
+    local record = {
+        name = OrNil(RC.CleanText(name, 30)),
+        realm = OrNil(realm),
+        addedBy = OrNil(addedBy),
+        updated = tonumber(updated),
+        removedBy = OrNil(removedBy),
+        reason = OrNil(reason),
+    }
+    if not (record.name and record.addedBy and record.updated) then
+        return
+    end
+    -- Officers only: whoever made the change (the adder, or the remover) has
+    -- to be an officer, and a live change has to come from them directly
+    local actor = record.removedBy or record.addedBy
+    if relay ~= "r" and sender ~= actor and not (record.removedBy == nil and Gankers:IsOfficer(sender)) then
+        return
+    end
+    if not Gankers:IsOfficer(actor) then
+        RC:Debug("ignored KOS guild change to <" .. record.name .. "> by non-officer " .. actor)
+        return
+    end
+    Gankers:MergeGuild(record)
+end
+
 ----------------------------------------------------------------------
 -- Sync
 -- SYNCREQ ~ requester ~ since       "send me anything newer than since"
@@ -531,6 +676,9 @@ function Gankers:LatestStamp()
     for _, bounty in pairs(RC.db.bounties) do
         latest = math.max(latest, bounty.updated)
     end
+    for _, guild in pairs(RC.db.kosGuilds) do
+        latest = math.max(latest, guild.updated)
+    end
     return latest
 end
 
@@ -544,6 +692,11 @@ local function RecordsSince(since)
     for _, bounty in pairs(RC.db.bounties) do
         if bounty.updated > since then
             table.insert(records, { updated = bounty.updated, payload = EncodeBounty(bounty, true) })
+        end
+    end
+    for _, guild in pairs(RC.db.kosGuilds) do
+        if guild.updated > since then
+            table.insert(records, { updated = guild.updated, payload = EncodeGuild(guild, true) })
         end
     end
     table.sort(records, function(a, b) return a.updated > b.updated end)
@@ -568,7 +721,10 @@ end
 
 local function QueueRecords(records)
     for _, record in ipairs(records) do
-        table.insert(sendQueue, record.payload)
+        -- An oversized record would fail forever and stall the queue
+        if #record.payload <= RC.MAX_MESSAGE then
+            table.insert(sendQueue, record.payload)
+        end
     end
     if not sendTicker and #sendQueue > 0 then
         sendTicker = C_Timer.NewTicker(SYNC_PACE, SendNextQueued)
@@ -619,6 +775,11 @@ local function Purge()
             RC.db.bounties[key] = nil
         end
     end
+    for key, guild in pairs(RC.db.kosGuilds) do
+        if guild.removedBy and guild.updated < cutoff then
+            RC.db.kosGuilds[key] = nil
+        end
+    end
 end
 
 ----------------------------------------------------------------------
@@ -630,8 +791,13 @@ function Gankers:CheckUnit(unit)
         return
     end
     local name = RC:GetHostileUnitName(unit)
+    if not name then
+        return
+    end
+    local guild = RC:GetUnitGuild(unit)
     local ganker = self:Get(name)
-    if not ganker then
+    local kosGuild = guild and self:GetGuild(guild)
+    if not (ganker or kosGuild) then
         return
     end
     local now = GetTime()
@@ -640,12 +806,22 @@ function Gankers:CheckUnit(unit)
     end
     warnedAt[name] = now
 
-    local _, bounty = self:ActiveBounties(name)
-    local details = "reported " .. ganker.reports .. (ganker.reports == 1 and " time" or " times")
-    if bounty > 0 then
-        details = details .. ", bounty " .. RC.FormatGold(bounty)
+    local display = RC.DisplayName(name) .. (guild and (" <" .. guild .. ">") or "")
+    local text
+    if ganker then
+        local _, bounty = self:ActiveBounties(name)
+        local details = "reported " .. ganker.reports .. (ganker.reports == 1 and " time" or " times")
+        if bounty > 0 then
+            details = details .. ", bounty " .. RC.FormatGold(bounty)
+        end
+        if kosGuild then
+            details = details .. ", KOS guild"
+        end
+        text = RC.COLORS.ERROR .. "Ganker spotted: " .. display .. "|r (" .. details .. ")"
+    else
+        text = RC.COLORS.ERROR .. "KOS guild: " .. display .. "|r" ..
+            (kosGuild.reason and (" (" .. kosGuild.reason .. ")") or "")
     end
-    local text = RC.COLORS.ERROR .. "Ganker spotted: " .. RC.DisplayName(name) .. "|r (" .. details .. ")"
     RC:Print(text)
     UIErrorsFrame:AddMessage(text)
     if RC.db.sound then

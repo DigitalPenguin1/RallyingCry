@@ -1,6 +1,6 @@
 -- Rallying Cry - Ganker List Window
--- The guild's ganker list with bounties. Rows scroll with the mouse wheel.
--- Each row has Bounty, Claim, and Remove buttons, shown only when usable.
+-- Two lists in one window: gankers (with bounties) and KOS guilds. Rows
+-- scroll with the mouse wheel. Row buttons only show when usable.
 
 local RC = RallyingCry
 
@@ -19,6 +19,26 @@ local COL_NAME, COL_REPORTS, COL_SEEN, COL_BOUNTY, COL_BUTTONS = 0, 150, 205, 33
 local BOUNTY_POPUP = "RALLYINGCRY_POST_BOUNTY"
 local CLAIM_POPUP = "RALLYINGCRY_CONFIRM_CLAIM"
 local REMOVE_POPUP = "RALLYINGCRY_CONFIRM_REMOVE"
+local REMOVE_GUILD_POPUP = "RALLYINGCRY_CONFIRM_REMOVE_GUILD"
+
+-- Per-mode labels. Guild rows reuse the ganker columns: name, then "Added by"
+-- in the wide last-seen column.
+local MODES = {
+    gankers = {
+        headers = { "Name", "Reports", "Last seen", "Bounty" },
+        add = "Add Ganker",
+        empty = "No gankers yet. They're added when a Ganked! or Hunt alert names one, or click Add Ganker.",
+        one = "1 ganker",
+        many = " gankers",
+    },
+    guilds = {
+        headers = { "Guild", "", "Added by", "" },
+        add = "Add Guild",
+        empty = "No KOS guilds yet. Every member of a guild on this list counts as a ganker. Officers can add one with Add Guild.",
+        one = "1 guild",
+        many = " guilds",
+    },
+}
 
 local function Me()
     return RC:PlayerFullName()
@@ -94,6 +114,18 @@ StaticPopupDialogs[CLAIM_POPUP] = {
     hideOnEscape = true,
 }
 
+StaticPopupDialogs[REMOVE_GUILD_POPUP] = {
+    text = "Remove <%s> from the KOS guild list?",
+    button1 = "Remove",
+    button2 = "Cancel",
+    OnAccept = function(_, name)
+        RC.Gankers:RemoveGuild(name)
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+}
+
 StaticPopupDialogs[REMOVE_POPUP] = {
     text = "Remove %s from the guild ganker list?",
     button1 = "Remove",
@@ -125,13 +157,36 @@ local function Column(row, x, width, font)
     return text
 end
 
+local function ShowGuildTooltip(row)
+    local guild = row.guild
+    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+    GameTooltip:SetText("<" .. guild.name .. ">", 1, 0.2, 0.2)
+    if guild.realm then
+        GameTooltip:AddLine(guild.realm, 0.8, 0.8, 0.8)
+    end
+    if guild.reason then
+        GameTooltip:AddLine(guild.reason, 1, 1, 1, true)
+    end
+    GameTooltip:AddLine("Added by " .. RC.DisplayName(guild.addedBy), 0.8, 0.8, 0.8)
+    GameTooltip:AddLine("Every member counts as a ganker.", 0.8, 0.8, 0.8)
+    GameTooltip:Show()
+end
+
 local function ShowRowTooltip(row)
+    if row.guild then
+        ShowGuildTooltip(row)
+        return
+    end
     local ganker = row.ganker
     if not ganker then
         return
     end
     GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
     GameTooltip:SetText(RC.DisplayName(ganker.name), 1, 0.2, 0.2)
+    if ganker.guild then
+        local kos = RC.Gankers:GetGuild(ganker.guild) and " |cffff3333(KOS guild)|r" or ""
+        GameTooltip:AddLine("<" .. ganker.guild .. ">" .. kos, 1, 1, 1)
+    end
     if ganker.reason then
         GameTooltip:AddLine(ganker.reason, 1, 1, 1, true)
     end
@@ -186,7 +241,11 @@ function List:CreateRow(parent, index)
     row.claimButton:SetPoint("LEFT", row.bountyButton, "RIGHT", 4, 0)
 
     row.removeButton = SmallButton(row, "X", 22, function()
-        StaticPopup_Show(REMOVE_POPUP, RC.DisplayName(row.ganker.name), nil, row.ganker.name)
+        if row.guild then
+            StaticPopup_Show(REMOVE_GUILD_POPUP, row.guild.name, nil, row.guild.name)
+        else
+            StaticPopup_Show(REMOVE_POPUP, RC.DisplayName(row.ganker.name), nil, row.ganker.name)
+        end
     end)
     row.removeButton:SetPoint("LEFT", row.claimButton, "RIGHT", 4, 0)
 
@@ -217,22 +276,30 @@ function List:Create()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", PADDING, -12)
-    title:SetText("Guild Ganker List")
+    title:SetText("Ganker List")
     title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
 
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", 0, 0)
 
-    local headers = {
-        { COL_NAME + 4, "Name" },
-        { COL_REPORTS, "Reports" },
-        { COL_SEEN, "Last seen" },
-        { COL_BOUNTY, "Bounty" },
-    }
-    for _, header in ipairs(headers) do
+    -- Gankers | Guilds toggle
+    self.tabs = {}
+    self.tabs.guilds = SmallButton(frame, "Guilds", 70, function()
+        List:SetMode("guilds")
+    end)
+    self.tabs.guilds:SetHeight(20)
+    self.tabs.guilds:SetPoint("TOPRIGHT", -36, -10)
+    self.tabs.gankers = SmallButton(frame, "Gankers", 70, function()
+        List:SetMode("gankers")
+    end)
+    self.tabs.gankers:SetHeight(20)
+    self.tabs.gankers:SetPoint("RIGHT", self.tabs.guilds, "LEFT", -4, 0)
+
+    self.headers = {}
+    for i, x in ipairs({ COL_NAME + 4, COL_REPORTS, COL_SEEN, COL_BOUNTY }) do
         local text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        text:SetPoint("TOPLEFT", PADDING + header[1], -HEADER_TOP)
-        text:SetText(header[2])
+        text:SetPoint("TOPLEFT", PADDING + x, -HEADER_TOP)
+        self.headers[i] = text
     end
 
     self.rows = {}
@@ -243,11 +310,11 @@ function List:Create()
     self.empty = frame:CreateFontString(nil, "OVERLAY", "GameFontDisable")
     self.empty:SetPoint("TOP", 0, -(HEADER_TOP + 60))
     self.empty:SetWidth(WIDTH - 80)
-    self.empty:SetText("No gankers yet. They're added when a Ganked! or Hunt alert names one, or click Add Ganker.")
 
     local add = SmallButton(frame, "Add Ganker", 100, function()
         List:ShowAddForm()
     end)
+    self.addButton = add
     add:SetHeight(22)
     add:SetPoint("BOTTOMLEFT", PADDING, 12)
 
@@ -259,6 +326,7 @@ function List:Create()
     hint:SetText("Hover a row for details. Scroll for more.")
 
     self.offset = 0
+    self.mode = self.mode or "gankers"
     frame:EnableMouseWheel(true)
     frame:SetScript("OnMouseWheel", function(_, delta)
         List.offset = List.offset - delta
@@ -274,12 +342,63 @@ function List:Create()
     self.frame = frame
 end
 
+function List:SetMode(mode)
+    self.mode = mode
+    self.offset = 0
+    if self.addForm then
+        self.addForm:Hide()
+    end
+    self:Refresh()
+end
+
+local function FillGankerRow(row, entry, me)
+    local ganker = entry.ganker
+    row.ganker, row.guild = ganker, nil
+    row.name:SetText(RC.DisplayName(ganker.name))
+    row.reports:SetText(ganker.reports)
+    row.seen:SetText(TimeAgo(ganker.lastSeen))
+    row.bounty:SetText(entry.bounty > 0 and RC.FormatGold(entry.bounty) or "|cff808080-|r")
+    row.bountyButton:Show()
+    row.claimButton:SetShown(RC.Gankers:CanClaim(ganker.name))
+    row.removeButton:SetShown(RC.Gankers:CanRemove(me, ganker))
+end
+
+local function FillGuildRow(row, guild, me)
+    row.ganker, row.guild = nil, guild
+    row.name:SetText("<" .. guild.name .. ">")
+    row.reports:SetText("")
+    row.seen:SetText(RC.DisplayName(guild.addedBy))
+    row.bounty:SetText("")
+    row.bountyButton:Hide()
+    row.claimButton:Hide()
+    row.removeButton:SetShown(RC.Gankers:IsOfficer(me))
+end
+
 function List:Refresh()
     if not (self.frame and self.frame:IsShown()) then
         return
     end
 
-    local entries = RC.Gankers:Sorted()
+    local mode = MODES[self.mode]
+    for i, header in ipairs(self.headers) do
+        header:SetText(mode.headers[i])
+    end
+    self.addButton:SetText(mode.add)
+    -- Only officers manage KOS guilds
+    self.addButton:SetShown(self.mode ~= "guilds" or RC.Gankers:IsOfficer(Me()))
+    self.empty:SetText(mode.empty)
+    for key, tab in pairs(self.tabs) do
+        if key == self.mode then
+            tab:SetText("|cffffd100" .. (key == "gankers" and "Gankers" or "Guilds") .. "|r")
+            tab:LockHighlight()
+        else
+            tab:SetText("|cff808080" .. (key == "gankers" and "Gankers" or "Guilds") .. "|r")
+            tab:UnlockHighlight()
+        end
+    end
+
+    local guildMode = self.mode == "guilds"
+    local entries = guildMode and RC.Gankers:SortedGuilds() or RC.Gankers:Sorted()
     local maxOffset = math.max(0, #entries - ROWS)
     self.offset = math.min(math.max(self.offset, 0), maxOffset)
 
@@ -287,17 +406,14 @@ function List:Refresh()
     for i, row in ipairs(self.rows) do
         local entry = entries[self.offset + i]
         if entry then
-            local ganker = entry.ganker
-            row.ganker = ganker
-            row.name:SetText(RC.DisplayName(ganker.name))
-            row.reports:SetText(ganker.reports)
-            row.seen:SetText(TimeAgo(ganker.lastSeen))
-            row.bounty:SetText(entry.bounty > 0 and RC.FormatGold(entry.bounty) or "|cff808080-|r")
-            row.claimButton:SetShown(RC.Gankers:CanClaim(ganker.name))
-            row.removeButton:SetShown(RC.Gankers:CanRemove(me, ganker))
+            if guildMode then
+                FillGuildRow(row, entry, me)
+            else
+                FillGankerRow(row, entry, me)
+            end
             row:Show()
         else
-            row.ganker = nil
+            row.ganker, row.guild = nil, nil
             row:Hide()
         end
     end
@@ -306,7 +422,7 @@ function List:Refresh()
     if #entries > ROWS then
         self.pageText:SetText((self.offset + 1) .. "-" .. math.min(self.offset + ROWS, #entries) .. " of " .. #entries)
     else
-        self.pageText:SetText(#entries == 1 and "1 ganker" or (#entries .. " gankers"))
+        self.pageText:SetText(#entries == 1 and mode.one or (#entries .. mode.many))
     end
 end
 
@@ -342,15 +458,26 @@ function List:CreateAddForm()
     form:EnableMouse(true)
     form:Hide()
 
-    local title = form:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", FORM_PADDING, -14)
-    title:SetText("Add Ganker")
-    title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
+    form.title = form:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    form.title:SetPoint("TOPLEFT", FORM_PADDING, -14)
+    form.title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
 
-    local nameLabel = FormLabel(form, "Name", title, 14)
+    form.nameLabel = FormLabel(form, "Name", form.title, 14)
+    local nameLabel = form.nameLabel
     form.name = FormInput(form, nameLabel, 180, 40)
 
     form.targetButton = SmallButton(form, "Use Target", 90, function()
+        if form.mode == "guilds" then
+            local guild, realm = RC:GetUnitGuild("target")
+            if guild and RC:GetHostileTargetName() then
+                form.name:SetText(guild)
+                form.realm = realm
+                form.error:SetText("")
+            else
+                form.error:SetText("Target an enemy player who's in a guild first.")
+            end
+            return
+        end
         local target = RC:GetHostileTargetName()
         if target then
             form.name:SetText(RC.DisplayName(target))
@@ -366,6 +493,7 @@ function List:CreateAddForm()
     form.reason = FormInput(form, reasonLabel, FORM_WIDTH - FORM_PADDING * 2 - 6, 60)
 
     local bountyLabel = FormLabel(form, "Bounty in gold |cff808080(optional)|r", reasonLabel, 34)
+    form.bountyLabel = bountyLabel
     form.bounty = FormInput(form, bountyLabel, 90, 7)
     form.bounty:SetNumeric(true)
 
@@ -387,11 +515,18 @@ function List:CreateAddForm()
     add:SetPoint("RIGHT", cancel, "LEFT", -8, 0)
 
     -- Tab moves between fields, Enter adds, Escape closes
-    local fields = { form.name, form.reason, form.bounty }
-    for i, box in ipairs(fields) do
+    local allFields = { form.name, form.reason, form.bounty }
+    for _, box in ipairs(allFields) do
         box:SetScript("OnTabPressed", function()
+            local fields = form.mode == "guilds" and { form.name, form.reason } or allFields
+            local index = 1
+            for i, field in ipairs(fields) do
+                if field == box then
+                    index = i
+                end
+            end
             local step = IsShiftKeyDown() and -1 or 1
-            fields[(i - 1 + step) % #fields + 1]:SetFocus()
+            fields[(index - 1 + step) % #fields + 1]:SetFocus()
         end)
         box:SetScript("OnEnterPressed", function()
             List:SubmitAddForm()
@@ -409,8 +544,26 @@ function List:ShowAddForm()
         self:CreateAddForm()
     end
     local form = self.addForm
+    local guildMode = self.mode == "guilds"
+    form.mode = self.mode
+    form.realm = nil
+    form.title:SetText(guildMode and "Add KOS Guild" or "Add Ganker")
+    form.nameLabel:SetText(guildMode and "Guild name" or "Name")
+    form.bountyLabel:SetShown(not guildMode)
+    form.bounty:SetShown(not guildMode)
+
     local target = RC:GetHostileTargetName()
-    form.name:SetText(target and RC.DisplayName(target) or "")
+    if guildMode then
+        local guild, realm
+        if target then
+            guild, realm = RC:GetUnitGuild("target")
+        end
+        target = guild
+        form.realm = realm
+        form.name:SetText(guild or "")
+    else
+        form.name:SetText(target and RC.DisplayName(target) or "")
+    end
     form.reason:SetText("")
     form.bounty:SetText("")
     form.error:SetText("")
@@ -424,6 +577,21 @@ end
 
 function List:SubmitAddForm()
     local form = self.addForm
+    if form.mode == "guilds" then
+        local guild = RC.CleanText(form.name:GetText(), 30)
+        if guild == "" then
+            form.error:SetText("Enter the guild's name.")
+            form.name:SetFocus()
+            return
+        end
+        if not IsInGuild() then
+            form.error:SetText("You need to be in a guild to use the ganker list.")
+            return
+        end
+        RC.Gankers:AddGuild(guild, form.realm, form.reason:GetText())
+        form:Hide()
+        return
+    end
     local name = RC.NormalizeName(form.name:GetText())
     if not name then
         form.error:SetText("Enter the ganker's name.")

@@ -42,6 +42,12 @@ function RC.FormatAlert(alert)
     end
     if alert.target then
         text = text .. ". Ganker: " .. RC.COLORS.ERROR .. RC.DisplayName(alert.target) .. "|r"
+        if alert.targetGuild then
+            text = text .. " <" .. alert.targetGuild .. ">"
+            if RC.Gankers:GetGuild(alert.targetGuild) then
+                text = text .. RC.COLORS.ERROR .. " (KOS guild)|r"
+            end
+        end
         local _, bounty = RC.Gankers:ActiveBounties(RC.NormalizeName(alert.target) or alert.target)
         if bounty > 0 then
             text = text .. " (bounty " .. RC.FormatGold(bounty) .. ")"
@@ -65,6 +71,7 @@ local function AddToLog(alert)
         zone = alert.zone,
         subzone = alert.subzone,
         target = alert.target,
+        targetGuild = alert.targetGuild,
         note = alert.note,
     })
     for i = #log, LOG_SIZE + 1, -1 do

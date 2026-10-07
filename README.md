@@ -84,6 +84,8 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 - **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the window, banner, and sound
 - **Spam guard**: 10 second cooldown between your alerts, and repeat alerts from the same person get dropped. All Clear skips the cooldown but only works while you have an alert out
 
+<p align="center"><img src="docs/images/sync.png" alt="Sync page in settings with counts, Sync Now and Clear Log buttons, and the sync log" width="640"></p>
+
 ## Slash Commands (optional)
 
 Everything below is also on the minimap button, the panel, or the settings page. Commands are handy for macros and keybind addons.

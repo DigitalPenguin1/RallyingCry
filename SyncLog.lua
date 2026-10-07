@@ -206,7 +206,8 @@ function SyncLog:CreatePage()
 
     local messages = CreateFrame("ScrollingMessageFrame", nil, box)
     messages:SetPoint("TOPLEFT", 10, -10)
-    messages:SetPoint("BOTTOMRIGHT", -10, 10)
+    -- Extra room at the bottom so the newest line clears the border
+    messages:SetPoint("BOTTOMRIGHT", -10, 16)
     messages:SetFontObject("GameFontHighlightSmall")
     messages:SetJustifyH("LEFT")
     messages:SetFading(false)

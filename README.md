@@ -16,7 +16,7 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 2. Click the **Rallying Cry minimap button** to open the alert panel, and press **Ganked!** when you're in trouble
 3. When a guildmate calls for help, click **Accept** to join their group and get a waypoint to them
 
-You never have to type a command. The minimap button does it all:
+You don't need commands for everyday use. The minimap button gets you everywhere:
 
 | Minimap button | What it does |
 |---|---|
@@ -26,7 +26,7 @@ You never have to type a command. The minimap button does it all:
 | **Hover** | See the last alert |
 | **Drag** | Move it around the minimap |
 
-Slash commands are there too, if you prefer typing or want to put alerts in a macro.
+Slash commands are there too, if you prefer typing, want to put alerts in a macro, or want the extras like the alert log (`/rc log`).
 
 ## Alerts
 
@@ -158,7 +158,7 @@ Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddO
 | Panel or minimap button missing | `/rc panel` or `/rc minimap`, or check the settings page |
 | New version didn't load | Fully restart the game after updating, not just `/reload` |
 
-**Debug tip**: `/rc debug` logs every message Rallying Cry sends and receives. To copy chat output, install [Chat Copy Paste](https://www.curseforge.com/wow/addons/chat-copy-paste).
+**Debug tip**: `/rc debug` prints every message Rallying Cry receives, the alerts you send, and sync activity, in chat. To copy chat output, install [Chat Copy Paste](https://www.curseforge.com/wow/addons/chat-copy-paste).
 
 **Bugs and ideas**: https://github.com/DigitalPenguin1/RallyingCry/issues
 

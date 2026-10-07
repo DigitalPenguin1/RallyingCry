@@ -44,7 +44,7 @@ function RC.FormatAlert(alert)
         text = text .. ". Ganker: " .. RC.COLORS.ERROR .. RC.DisplayName(alert.target) .. "|r"
         if alert.targetGuild then
             text = text .. " <" .. alert.targetGuild .. ">"
-            if RC.Gankers:GetGuild(alert.targetGuild) then
+            if RC.Gankers:MatchGuild(alert.targetGuild) then
                 text = text .. RC.COLORS.ERROR .. " (KOS guild)|r"
             end
         end

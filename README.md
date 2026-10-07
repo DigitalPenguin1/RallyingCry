@@ -44,6 +44,7 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 - **Claiming**: kill a ganker with a bounty, then click **Claim** or type `/rc claim Name`. Each poster gets a Confirm/Deny window (even if they were offline when you claimed). Confirm reminds them to mail you the gold
 - **Warnings**: target or mouse over a listed ganker, or a member of a KOS guild, and you get a chat warning and a sound, with their bounty
 - **KOS guilds**: officers can put a whole guild on KOS. Every member then counts as a ganker without being added one by one. Switch the list window to **Guilds**, click **Add Guild** (it fills in your target's guild), or type `/rc kos guild add Guild Name - reason`. Alerts show the ganker's guild and flag KOS guilds
+- **Guild families**: adding **Olympus** also covers numbered guilds like Olympus 2, Olympus II, and Olympus #3 (untick the box in the form for an exact match only). End a name with `*`, like **Olympus\***, to cover every guild that starts with it. Targeting a member of Olympus 2 and clicking Add Guild fills in Olympus. Entries that would cover your own guild are refused
 
 The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
 

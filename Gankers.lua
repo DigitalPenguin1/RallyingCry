@@ -133,7 +133,7 @@ end
 -- Wire format
 -- KOS  ~ relay ~ name ~ addedBy ~ reports ~ lastSeen ~ updated ~ removedBy ~ zone ~ reason ~ guild
 -- BNTY ~ relay ~ name ~ poster ~ gold ~ status ~ claimant ~ updated
--- KOSG ~ relay ~ guild ~ realm ~ addedBy ~ updated ~ removedBy ~ reason
+-- KOSG ~ relay ~ guild ~ realm ~ addedBy ~ updated ~ removedBy ~ reason ~ numbered
 -- relay is "r" when the record is being passed along in a sync, empty when
 -- the sender made the change themselves.
 ----------------------------------------------------------------------
@@ -146,13 +146,55 @@ end
 
 local function EncodeGuild(g, relay)
     return RC.Pack("KOSG", relay and "r" or "", RC.CleanText(g.name, 30), g.realm or "", g.addedBy,
-        g.updated, g.removedBy or "", RC.CleanText(g.reason, 60))
+        g.updated, g.removedBy or "", RC.CleanText(g.reason, 60), g.numbered and "1" or "")
 end
 
 -- Matches on the guild name alone. Forever has no realms, and elsewhere
 -- guild names rarely clash across connected realms.
 local function GuildKey(name)
     return name:lower()
+end
+
+-- Guild families. A KOS entry can cover more than one guild:
+--   numbered: "Olympus" also matches Olympus 2, Olympus II, Olympus #3, Olympus2
+--   wildcard: "Olympus*" matches every guild whose name starts with Olympus
+local MIN_WILDCARD_PREFIX = 3
+
+local function IsWildcard(name)
+    return name:sub(-1) == "*"
+end
+
+local function HasNumberSuffix(rest)
+    return rest:match("^[%s%-#]*%d+$") ~= nil or rest:match("^%s+[IVXLivxl]+$") ~= nil
+end
+
+local function EntryMatches(entry, guildName)
+    local base, guild = entry.name:lower(), guildName:lower()
+    if IsWildcard(base) then
+        local prefix = base:sub(1, -2)
+        return #prefix >= MIN_WILDCARD_PREFIX and guild:sub(1, #prefix) == prefix
+    end
+    if guild == base then
+        return true
+    end
+    return entry.numbered == true and guild:sub(1, #base) == base and HasNumberSuffix(guildName:sub(#base + 1))
+end
+
+-- "Olympus 2" -> "Olympus", "Olympus III" -> "Olympus". Nil if it isn't numbered.
+function RC.GuildBaseName(name)
+    local base = name:match("^(.-)[%s%-#]*%d+$") or name:match("^(.-)%s+[IVXL]+$")
+    if base and base:match("%S") then
+        return base
+    end
+end
+
+-- "<Olympus> + numbered" or "<Olympus*>" for lists and chat
+function RC.GuildLabel(entry)
+    local label = "<" .. entry.name .. ">"
+    if entry.numbered and not IsWildcard(entry.name) then
+        label = label .. " |cff808080+ numbered|r"
+    end
+    return label
 end
 
 local function EncodeBounty(b, relay)
@@ -333,8 +375,12 @@ function Gankers:GetGuild(name)
     end
 end
 
-function Gankers:AddGuild(name, realm, reason)
+-- numbered defaults to on: adding "Olympus" covers Olympus 2, Olympus II, ...
+function Gankers:AddGuild(name, realm, reason, numbered)
     name = OrNil(RC.CleanText(name, 30))
+    if numbered == nil then
+        numbered = true
+    end
     if not name then
         RC:Print("Usage: /rc kos guild add <guild name> [- reason]")
         return
@@ -346,9 +392,13 @@ function Gankers:AddGuild(name, realm, reason)
         RC:Print(RC.COLORS.WARNING .. "Only officers can add KOS guilds.|r")
         return
     end
+    if IsWildcard(name) and #name - 1 < MIN_WILDCARD_PREFIX then
+        RC:Print(RC.COLORS.WARNING .. "Use at least " .. MIN_WILDCARD_PREFIX .. " letters before the *.|r")
+        return
+    end
     local myGuild = GetGuildInfo("player")
-    if myGuild and GuildKey(myGuild) == GuildKey(name) then
-        RC:Print(RC.COLORS.WARNING .. "That's your own guild.|r")
+    if myGuild and EntryMatches({ name = name, numbered = numbered }, myGuild) then
+        RC:Print(RC.COLORS.WARNING .. "That would include your own guild.|r")
         return
     end
     reason = OrNil(reason)
@@ -358,10 +408,17 @@ function Gankers:AddGuild(name, realm, reason)
         realm = realm or (current and current.realm),
         addedBy = current and current.addedBy or Me(),
         reason = reason or (current and current.reason),
+        numbered = numbered and not IsWildcard(name) or nil,
         updated = NextStamp(RC.db.kosGuilds[GuildKey(name)]),
     })
+    local covers = ""
+    if IsWildcard(name) then
+        covers = " Covers every guild starting with " .. name:sub(1, -2) .. "."
+    elseif numbered then
+        covers = " Also covers " .. name .. " 2, " .. name .. " II, and so on."
+    end
     RC:Print((current and "Updated " or "Added ") .. RC.COLORS.ERROR .. "<" .. name .. ">|r " ..
-        (current and "on" or "to") .. " the KOS guild list. Every member now counts as a ganker.")
+        (current and "on" or "to") .. " the KOS guild list." .. covers)
 end
 
 function Gankers:RemoveGuild(name)
@@ -379,6 +436,23 @@ function Gankers:RemoveGuild(name)
     record.updated = NextStamp(current)
     Publish("KOSG", record)
     RC:Print("Removed <" .. current.name .. "> from the KOS guild list.")
+end
+
+-- The KOS entry that covers a guild (exactly, as a numbered alt, or by
+-- wildcard), or nil
+function Gankers:MatchGuild(guildName)
+    if not guildName then
+        return nil
+    end
+    local exact = self:GetGuild(guildName)
+    if exact then
+        return exact
+    end
+    for _, entry in pairs(RC.db.kosGuilds) do
+        if not entry.removedBy and EntryMatches(entry, guildName) then
+            return entry
+        end
+    end
 end
 
 function Gankers:SortedGuilds()
@@ -637,7 +711,7 @@ RC.MessageHandlers.BNTY = function(_, sender, relay, name, poster, gold, status,
     Gankers:MergeBounty(record, relay ~= "r")
 end
 
-RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updated, removedBy, reason)
+RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updated, removedBy, reason, numbered)
     local record = {
         name = OrNil(RC.CleanText(name, 30)),
         realm = OrNil(realm),
@@ -645,6 +719,7 @@ RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updat
         updated = tonumber(updated),
         removedBy = RC.NormalizeName(removedBy),
         reason = OrNil(reason),
+        numbered = numbered == "1" or nil,
     }
     if not (record.name and record.addedBy and record.updated) then
         return
@@ -798,7 +873,7 @@ function Gankers:CheckUnit(unit)
     end
     local guild = RC:GetUnitGuild(unit)
     local ganker = self:Get(name)
-    local kosGuild = guild and self:GetGuild(guild)
+    local kosGuild = guild and self:MatchGuild(guild)
     if not (ganker or kosGuild) then
         return
     end

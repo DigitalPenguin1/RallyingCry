@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- KOS guild families: adding Olympus also covers Olympus 2, Olympus II, and so on, and Olympus* covers every guild starting with Olympus. Add Guild fills in the base name when you target a numbered guild
 - Hunt Ganker is blue instead of purple
 - Slash commands that take a name (`/rc hunt`, `/rc kos add`, `/rc bounty`) read the full first name and surname
 - KOS guilds no longer save the shard name the game reports as a realm, since Forever has no realms

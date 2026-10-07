@@ -161,6 +161,11 @@ local function ShowGuildTooltip(row)
     local guild = row.guild
     GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
     GameTooltip:SetText("<" .. guild.name .. ">", 1, 0.2, 0.2)
+    if guild.name:sub(-1) == "*" then
+        GameTooltip:AddLine("Matches every guild starting with " .. guild.name:sub(1, -2), 1, 0.82, 0, true)
+    elseif guild.numbered then
+        GameTooltip:AddLine("Also matches " .. guild.name .. " 2, " .. guild.name .. " II, and so on", 1, 0.82, 0, true)
+    end
     if guild.realm then
         GameTooltip:AddLine(guild.realm, 0.8, 0.8, 0.8)
     end
@@ -184,7 +189,7 @@ local function ShowRowTooltip(row)
     GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
     GameTooltip:SetText(RC.DisplayName(ganker.name), 1, 0.2, 0.2)
     if ganker.guild then
-        local kos = RC.Gankers:GetGuild(ganker.guild) and " |cffff3333(KOS guild)|r" or ""
+        local kos = RC.Gankers:MatchGuild(ganker.guild) and " |cffff3333(KOS guild)|r" or ""
         GameTooltip:AddLine("<" .. ganker.guild .. ">" .. kos, 1, 1, 1)
     end
     if ganker.reason then
@@ -365,7 +370,7 @@ end
 
 local function FillGuildRow(row, guild, me)
     row.ganker, row.guild = nil, guild
-    row.name:SetText("<" .. guild.name .. ">")
+    row.name:SetText(RC.GuildLabel(guild))
     row.reports:SetText("")
     row.seen:SetText(RC.DisplayName(guild.addedBy))
     row.bounty:SetText("")
@@ -470,7 +475,7 @@ function List:CreateAddForm()
         if form.mode == "guilds" then
             local guild, realm = RC:GetUnitGuild("target")
             if guild and RC:GetHostileTargetName() then
-                form.name:SetText(guild)
+                form:SetGuildName(guild)
                 form.realm = realm
                 form.error:SetText("")
             else
@@ -494,6 +499,16 @@ function List:CreateAddForm()
 
     local bountyLabel = FormLabel(form, "Bounty in gold |cff808080(optional)|r", reasonLabel, 34)
     form.bountyLabel = bountyLabel
+
+    -- Guild mode only, in the bounty field's spot
+    form.numbered = CreateFrame("CheckButton", nil, form, "UICheckButtonTemplate")
+    form.numbered:SetSize(24, 24)
+    form.numbered:SetPoint("TOPLEFT", reasonLabel, "BOTTOMLEFT", -2, -30)
+    local numberedText = form.numbered.Text or form.numbered.text or form.numbered:CreateFontString(nil, "OVERLAY")
+    numberedText:SetFontObject("GameFontHighlightSmall")
+    numberedText:ClearAllPoints()
+    numberedText:SetPoint("LEFT", form.numbered, "RIGHT", 2, 0)
+    form.numberedText = numberedText
     form.bounty = FormInput(form, bountyLabel, 90, 7)
     form.bounty:SetNumeric(true)
 
@@ -536,6 +551,15 @@ function List:CreateAddForm()
         end)
     end
 
+    -- "Olympus 2" fills in "Olympus" so the whole numbered family is covered
+    function form:SetGuildName(guild)
+        local base = guild and RC.GuildBaseName(guild)
+        self.name:SetText(base or guild or "")
+        self.numberedText:SetText("Also match numbered guilds (" .. (base or guild or "Olympus") ..
+            " 2, " .. (base or guild or "Olympus") .. " II...)")
+        self.numbered:SetChecked(true)
+    end
+
     self.addForm = form
 end
 
@@ -548,9 +572,11 @@ function List:ShowAddForm()
     form.mode = self.mode
     form.realm = nil
     form.title:SetText(guildMode and "Add KOS Guild" or "Add Ganker")
-    form.nameLabel:SetText(guildMode and "Guild name" or "Name")
+    form.nameLabel:SetText(guildMode and "Guild name |cff808080(end with * to match all that start with it)|r" or "Name")
     form.bountyLabel:SetShown(not guildMode)
     form.bounty:SetShown(not guildMode)
+    form.numbered:SetShown(guildMode)
+    form.numbered:SetChecked(true)
 
     local target = RC:GetHostileTargetName()
     if guildMode then
@@ -560,7 +586,7 @@ function List:ShowAddForm()
         end
         target = guild
         form.realm = realm
-        form.name:SetText(guild or "")
+        form:SetGuildName(guild)
     else
         form.name:SetText(target and RC.DisplayName(target) or "")
     end
@@ -588,7 +614,7 @@ function List:SubmitAddForm()
             form.error:SetText("You need to be in a guild to use the ganker list.")
             return
         end
-        RC.Gankers:AddGuild(guild, form.realm, form.reason:GetText())
+        RC.Gankers:AddGuild(guild, form.realm, form.reason:GetText(), form.numbered:GetChecked() and true or false)
         form:Hide()
         return
     end

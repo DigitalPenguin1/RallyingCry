@@ -22,10 +22,10 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 |---|---|---|
 | **Ganked!** | `/rc gank [note]` | You're being ganked, plus your zone, subzone, and coordinates |
 | **World PvP** | `/rc wpvp [note]` | There's a fight at your location |
-| **Hunt Ganker** | `/rc hunt [name] [note]` | You're hunting a ganker. Uses your target if it's an enemy player, otherwise the name you type |
+| **Hunt Ganker** | `/rc hunt [name] [note]` | You're hunting a ganker. Uses your target if it's an enemy player, otherwise the name you type (first name and surname) |
 | **All Clear** | `/rc clear` | You're safe, call it off. Closes their Accept/Decline window and removes the waypoint to you. Only works while you have an alert out (10 minutes) |
 
-Each incoming alert shows up in chat and as a banner across the middle of your screen, with a sound. If your target is an enemy player when you send, their name rides along.
+Each incoming alert shows up in chat and as a banner across the middle of your screen, with a sound. If your target is an enemy player when you send, their name and guild ride along, and guildmates see **(KOS guild)** if that guild is on your KOS list.
 
 ## Accept or Decline
 
@@ -42,11 +42,11 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 
 <p align="center"><img src="docs/images/ganker-list.png" alt="Ganker List showing a ganker with a 3 gold bounty" width="560"></p>
 
-- **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker**, which opens a form for the name (or Use Target), an optional reason, and an optional bounty, or type `/rc kos add Name reason`
+- **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker**, which opens a form for the name (or Use Target), an optional reason, and an optional bounty, or type `/rc kos add First Surname reason`
 - **Removing**: only the person who added them, or an officer, can take someone off. Officers are any rank with the guild's **Remove Member** permission
-- **Bounties**: click **Bounty** on a row, or `/rc bounty Name 50`, to pledge 50 gold. Several guildmates can stack bounties on the same ganker. `/rc bounty Name 0` withdraws yours
-- **Claiming**: kill a ganker with a bounty, then click **Claim** or type `/rc claim Name`. Each poster gets a Confirm/Deny window (even if they were offline when you claimed). Confirm reminds them to mail you the gold
-- **Warnings**: target or mouse over a listed ganker, or a member of a KOS guild, and you get a chat warning and a sound, with their bounty
+- **Bounties**: click **Bounty** on a row, or `/rc bounty First Surname 50`, to pledge 50 gold. Several guildmates can stack bounties on the same ganker. `/rc bounty First Surname 0` withdraws yours
+- **Claiming**: kill a ganker with a bounty, then click **Claim** or type `/rc claim First Surname`. Each poster gets a Confirm/Deny window (even if they were offline when you claimed). Confirm reminds them to mail you the gold
+- **Warnings**: target or mouse over a listed ganker, or a member of a KOS guild (including its numbered guilds), and you get a chat warning and a sound, with their bounty. Each player warns at most once a minute
 - **KOS guilds**: officers can put a whole guild on KOS. Every member then counts as a ganker without being added one by one. Switch the list window to **Guilds**, click **Add Guild** (it fills in your target's guild), or type `/rc kos guild add Guild Name - reason`. Alerts show the ganker's guild and flag KOS guilds
 - **Guild families**: adding **Olympus** also covers numbered guilds like Olympus 2, Olympus II, and Olympus #3 (untick the box in the form for an exact match only). End a name with `*`, like **Olympus\***, to cover every guild that starts with it. Targeting a member of Olympus 2 and clicking Add Guild fills in Olympus. Entries that would cover your own guild are refused
 
@@ -54,7 +54,7 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 
 The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
 
-Open the list from the **Ganker List** button on the panel, Shift-click the minimap button, a keybinding, or `/rc kos`. Gankers with the biggest bounty are listed first. Hover a row for the reason, who added them, where they were last seen, and each bounty. Auto-adding and warnings can each be turned off in settings.
+Open the list from the **Ganker List** button on the panel, Shift-click the minimap button, a keybinding, or `/rc kos`. Gankers with the biggest bounty are listed first, and KOS guilds are listed A to Z. Hover a row for the reason, who added them, their guild, where they were last seen, and each bounty. Auto-adding and warnings can each be turned off in settings.
 
 ## Features
 
@@ -106,7 +106,7 @@ Forever characters have a first name and a surname. Where a command takes a name
 Forever runs the modern addon API with Midnight's restrictions, which shapes what Rallying Cry can do:
 
 - **No automatic gank detection.** The combat log is blocked for addons, so you press the button yourself.
-- **Target names can be hidden in combat.** If the game hides your target's name, the alert goes out without it. Use `/rc hunt Name` to name the ganker by hand.
+- **Target names can be hidden in combat.** If the game hides your target's name or guild, the alert goes out without it. Use `/rc hunt First Surname` to name the ganker by hand.
 - **No coordinates inside instances.** The game hides your position there. The alert still sends the zone name.
 - **Ganker warnings may not fire in combat**, for the same reason.
 - Guildmates only see alerts if they have Rallying Cry installed.
@@ -115,9 +115,9 @@ Forever runs the modern addon API with Midnight's restrictions, which shapes wha
 
 Everything goes over the hidden guild addon channel, so only guildmates running Rallying Cry see it.
 
-- **Alerts** send your character name, zone, subzone, map coordinates, your enemy target's name (if any), and your note
+- **Alerts** send your character name, zone, subzone, map coordinates, your enemy target's name and guild (if any), and your note
 - **Accepting an alert** tells the sender you're coming
-- **The ganker list and bounties** are copied to every guildmate's computer, so the list survives as long as anyone in the guild has it
+- **The ganker list, KOS guilds, and bounties** are copied to every guildmate's computer, so they survive as long as anyone in the guild has them
 
 Nothing leaves the game. Rallying Cry has no website, account, or tracking.
 
@@ -133,7 +133,9 @@ Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddO
 | Guildmates don't see my alerts | They need Rallying Cry installed and enabled. Alerts also can't send during a dungeon boss fight or a PvP match |
 | No invite after clicking Accept | The sender has to lead their group (or not be in one), and you can't already be in a group. You'll get a message saying which |
 | Alert has no coordinates | The sender was in an instance, where the game hides positions |
-| Ganker list is empty on a new character | It fills in from guildmates within about 20 seconds of logging in. Someone with the list has to be online |
+| Ganker list is empty on a new character | It fills in from guildmates (gankers, KOS guilds, and bounties) within about 20 seconds of logging in. Someone with the list has to be online |
+| Can't add a KOS guild | Only officers (ranks with the Remove Member permission) can add or remove KOS guilds |
+| A numbered guild isn't flagged | KOS guilds added before the numbered option only match exactly. Add the guild again with the box ticked |
 | Panel or minimap button missing | `/rc panel` or `/rc minimap`, or check the settings page |
 | New version didn't load | Fully restart the game after updating, not just `/reload` |
 

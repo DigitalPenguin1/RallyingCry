@@ -8,6 +8,7 @@ ignore:
   - .gitignore
   - .pkgmeta
   - .claude
+  - docs
 
 manual-changelog: CHANGELOG.md
 

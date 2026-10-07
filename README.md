@@ -4,6 +4,8 @@ Call your guild for backup in **WoW: Forever**. One button tells every guildmate
 
 Alerts go over the hidden guild addon channel. Nobody outside your guild sees them, and you have to be in a guild to send or receive.
 
+<p align="center"><img src="docs/images/panel.png" alt="Rallying Cry button panel with Ganked!, World PvP, Hunt Ganker, All Clear, and Ganker List" width="170"></p>
+
 > **WoW: Forever only.** Built for the Forever client (interface 16001). It won't load on Classic Era, and isn't supported on Retail.
 
 > **Early version.** Rallying Cry is being built and tested on the Forever beta. Expect rough edges, and please [report anything odd](https://github.com/DigitalPenguin1/RallyingCry/issues).
@@ -38,6 +40,8 @@ The window closes on its own after 60 seconds, or when the sender calls All Clea
 
 The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the same list, and it catches you up on anything you missed when you log in.
 
+<p align="center"><img src="docs/images/ganker-list.png" alt="Ganker List window with Gankers and Guilds tabs" width="560"></p>
+
 - **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker**, which opens a form for the name (or Use Target), an optional reason, and an optional bounty, or type `/rc kos add Name reason`
 - **Removing**: only the person who added them, or an officer, can take someone off. Officers are any rank with the guild's **Remove Member** permission
 - **Bounties**: click **Bounty** on a row, or `/rc bounty Name 50`, to pledge 50 gold. Several guildmates can stack bounties on the same ganker. `/rc bounty Name 0` withdraws yours
@@ -51,6 +55,8 @@ The addon can't hold or move gold. A bounty is a pledge, and the poster pays it 
 Open the list from the **Ganker List** button on the panel, Shift-click the minimap button, a keybinding, or `/rc kos`. Gankers with the biggest bounty are listed first. Hover a row for the reason, who added them, where they were last seen, and each bounty. Auto-adding and warnings can each be turned off in settings.
 
 ## Features
+
+<p align="center"><img src="docs/images/settings.png" alt="Rallying Cry settings under Options, AddOns" width="640"></p>
 
 - **Settings page**: ESC > Options > AddOns > Rallying Cry, the gear on the panel, `/rc settings`, or right-click Rallying Cry in the addon compartment. Every option below is there as a checkbox, plus an **About** page
 - **Minimap button**: left-click toggles the panel, Shift-click opens the ganker list, right-click opens settings, drag to move. Hover to see the last alert. On by default, turn it off in settings or with `/rc minimap`

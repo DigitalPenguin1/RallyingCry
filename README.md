@@ -132,7 +132,7 @@ Forever runs the modern addon API with Midnight's restrictions, which shapes wha
 
 ## What Gets Shared
 
-Everything goes over the hidden guild addon channel, so only guildmates running Rallying Cry see it.
+Everything goes over the hidden guild addon channel, so only members of your guild running Rallying Cry see it. Nothing is shared with other guilds.
 
 - **Alerts** send your character name, zone, subzone, map coordinates, your enemy target's name and guild (if any), and your note
 - **Accepting an alert** tells the sender you're coming
@@ -143,6 +143,8 @@ Nothing leaves the game. Rallying Cry has no website, account, or tracking.
 ## How Sync Works
 
 There's no server. The ganker list, KOS guilds, and bounties live on every guildmate's computer, and Rallying Cry keeps the copies in step over the hidden guild addon channel.
+
+**It's guild only.** Your list is shared with your guild and nobody else. Other guilds, even ones running Rallying Cry, never see it, and you never see theirs. Each guild has its own separate list, so if you have an alt in a different guild, that alt gets that guild's list and never sends your main guild's list anywhere.
 
 - **Changes go out right away.** When someone adds a ganker, posts a bounty, or removes a guild, every guildmate online gets it within a second or two
 - **Newest wins.** Every ganker, bounty, and KOS guild carries the time it last changed. If two copies disagree, the newer one is kept, so an old copy can't bring back something that was removed

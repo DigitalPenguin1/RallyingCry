@@ -213,33 +213,33 @@ end
 
 -- Store a ganker record if it's newer than ours. Returns true if it was.
 function Gankers:MergeGanker(record)
-    local current = RC.db.gankers[record.name]
+    local current = RC.guild.gankers[record.name]
     if current and current.updated >= record.updated then
         return false
     end
-    RC.db.gankers[record.name] = record
+    RC.guild.gankers[record.name] = record
     Refresh()
     return true
 end
 
 function Gankers:MergeGuild(record)
     local key = GuildKey(record.name)
-    local current = RC.db.kosGuilds[key]
+    local current = RC.guild.kosGuilds[key]
     if current and current.updated >= record.updated then
         return false
     end
-    RC.db.kosGuilds[key] = record
+    RC.guild.kosGuilds[key] = record
     Refresh()
     return true
 end
 
 function Gankers:MergeBounty(record, live)
     local key = BountyKey(record.name, record.poster)
-    local previous = RC.db.bounties[key]
+    local previous = RC.guild.bounties[key]
     if previous and previous.updated >= record.updated then
         return false
     end
-    RC.db.bounties[key] = record
+    RC.guild.bounties[key] = record
     self:OnBountyChanged(record, previous, live)
     Refresh()
     return true
@@ -298,7 +298,7 @@ end
 
 -- Listed (and not removed) ganker record, or nil
 function Gankers:Get(name)
-    local ganker = name and RC.db.gankers[name]
+    local ganker = name and RC.guild.gankers[name]
     if ganker and not ganker.removedBy then
         return ganker
     end
@@ -319,7 +319,7 @@ function Gankers:Report(name, zone, guild)
         lastSeen = Now(),
         zone = zone,
         guild = guild or (current and current.guild),
-        updated = NextStamp(RC.db.gankers[name]),
+        updated = NextStamp(RC.guild.gankers[name]),
     })
 end
 
@@ -342,7 +342,7 @@ function Gankers:Add(name, reason)
         lastSeen = current and current.lastSeen,
         zone = current and current.zone,
         guild = current and current.guild,
-        updated = NextStamp(RC.db.gankers[name]),
+        updated = NextStamp(RC.guild.gankers[name]),
     })
     RC:Print((current and "Updated " or "Added ") .. RC.COLORS.ERROR .. RC.DisplayName(name) ..
         "|r " .. (current and "on" or "to") .. " the guild ganker list.")
@@ -369,7 +369,7 @@ end
 
 -- Listed (and not removed) KOS guild record, or nil
 function Gankers:GetGuild(name)
-    local guild = name and RC.db.kosGuilds[GuildKey(name)]
+    local guild = name and RC.guild.kosGuilds[GuildKey(name)]
     if guild and not guild.removedBy then
         return guild
     end
@@ -409,7 +409,7 @@ function Gankers:AddGuild(name, realm, reason, numbered)
         addedBy = current and current.addedBy or Me(),
         reason = reason or (current and current.reason),
         numbered = numbered and not IsWildcard(name) or nil,
-        updated = NextStamp(RC.db.kosGuilds[GuildKey(name)]),
+        updated = NextStamp(RC.guild.kosGuilds[GuildKey(name)]),
     })
     local covers = ""
     if IsWildcard(name) then
@@ -448,7 +448,7 @@ function Gankers:MatchGuild(guildName)
     if exact then
         return exact
     end
-    for _, entry in pairs(RC.db.kosGuilds) do
+    for _, entry in pairs(RC.guild.kosGuilds) do
         if not entry.removedBy and EntryMatches(entry, guildName) then
             return entry
         end
@@ -457,7 +457,7 @@ end
 
 function Gankers:SortedGuilds()
     local rows = {}
-    for _, guild in pairs(RC.db.kosGuilds) do
+    for _, guild in pairs(RC.guild.kosGuilds) do
         if not guild.removedBy then
             table.insert(rows, guild)
         end
@@ -483,7 +483,7 @@ function Gankers:PostBounty(name, gold)
     end
 
     local me = Me()
-    local current = RC.db.bounties[BountyKey(name, me)]
+    local current = RC.guild.bounties[BountyKey(name, me)]
     local display = RC.DisplayName(name)
 
     if gold == 0 then
@@ -529,7 +529,7 @@ function Gankers:Claim(name)
     end
     local me = Me()
     local count, total = 0, 0
-    for _, bounty in pairs(RC.db.bounties) do
+    for _, bounty in pairs(RC.guild.bounties) do
         if bounty.name == name and bounty.poster ~= me and BOUNTY_CLAIMABLE[bounty.status] then
             local record = CopyTable(bounty)
             record.status = "claimed"
@@ -549,7 +549,7 @@ function Gankers:Claim(name)
 end
 
 function Gankers:ResolveClaim(key, confirmed)
-    local bounty = RC.db.bounties[key]
+    local bounty = RC.guild.bounties[key]
     shownClaims[key] = nil
     if not bounty or bounty.status ~= "claimed" or bounty.poster ~= Me() then
         return
@@ -573,7 +573,7 @@ end
 
 function Gankers:ActiveBounties(name)
     local list, total = {}, 0
-    for _, bounty in pairs(RC.db.bounties) do
+    for _, bounty in pairs(RC.guild.bounties) do
         if bounty.name == name and BOUNTY_ACTIVE[bounty.status] then
             table.insert(list, bounty)
             total = total + bounty.gold
@@ -586,7 +586,7 @@ end
 -- True if you can claim at least one bounty on this ganker
 function Gankers:CanClaim(name)
     local me = Me()
-    for _, bounty in pairs(RC.db.bounties) do
+    for _, bounty in pairs(RC.guild.bounties) do
         if bounty.name == name and bounty.poster ~= me and BOUNTY_CLAIMABLE[bounty.status] then
             return true
         end
@@ -597,7 +597,7 @@ end
 -- Listed gankers, biggest bounty first, then most recently seen
 function Gankers:Sorted()
     local rows = {}
-    for name, ganker in pairs(RC.db.gankers) do
+    for name, ganker in pairs(RC.guild.gankers) do
         if not ganker.removedBy then
             local _, total = self:ActiveBounties(name)
             table.insert(rows, { ganker = ganker, bounty = total })
@@ -649,7 +649,7 @@ end
 -- Claims that came in while we were offline, or before a /reload
 function Gankers:ShowPendingClaims()
     local me = Me()
-    for _, bounty in pairs(RC.db.bounties) do
+    for _, bounty in pairs(RC.guild.bounties) do
         if bounty.poster == me and bounty.status == "claimed" then
             self:ShowClaimPopup(bounty)
         end
@@ -749,13 +749,13 @@ end
 
 function Gankers:LatestStamp()
     local latest = 0
-    for _, ganker in pairs(RC.db.gankers) do
+    for _, ganker in pairs(RC.guild.gankers) do
         latest = math.max(latest, ganker.updated)
     end
-    for _, bounty in pairs(RC.db.bounties) do
+    for _, bounty in pairs(RC.guild.bounties) do
         latest = math.max(latest, bounty.updated)
     end
-    for _, guild in pairs(RC.db.kosGuilds) do
+    for _, guild in pairs(RC.guild.kosGuilds) do
         latest = math.max(latest, guild.updated)
     end
     return latest
@@ -763,17 +763,17 @@ end
 
 local function RecordsSince(since)
     local records = {}
-    for _, ganker in pairs(RC.db.gankers) do
+    for _, ganker in pairs(RC.guild.gankers) do
         if ganker.updated > since then
             table.insert(records, { updated = ganker.updated, payload = EncodeGanker(ganker, true) })
         end
     end
-    for _, bounty in pairs(RC.db.bounties) do
+    for _, bounty in pairs(RC.guild.bounties) do
         if bounty.updated > since then
             table.insert(records, { updated = bounty.updated, payload = EncodeBounty(bounty, true) })
         end
     end
-    for _, guild in pairs(RC.db.kosGuilds) do
+    for _, guild in pairs(RC.guild.kosGuilds) do
         if guild.updated > since then
             table.insert(records, { updated = guild.updated, payload = EncodeGuild(guild, true) })
         end
@@ -856,21 +856,34 @@ RC.MessageHandlers.SYNCACK = function(_, sender, requester, latest)
     end
 end
 
+-- Joined, left, or switched guilds: drop anything tied to the old one
+function Gankers:OnGuildChanged()
+    wipe(rankByName)
+    wipe(warnedAt)
+    wipe(shownClaims)
+    wipe(sendQueue)
+    for requester, timer in pairs(pendingSync) do
+        timer:Cancel()
+        pendingSync[requester] = nil
+    end
+    Refresh()
+end
+
 local function Purge()
     local cutoff = Now() - PURGE_AFTER
-    for name, ganker in pairs(RC.db.gankers) do
+    for name, ganker in pairs(RC.guild.gankers) do
         if ganker.removedBy and ganker.updated < cutoff then
-            RC.db.gankers[name] = nil
+            RC.guild.gankers[name] = nil
         end
     end
-    for key, bounty in pairs(RC.db.bounties) do
+    for key, bounty in pairs(RC.guild.bounties) do
         if not BOUNTY_ACTIVE[bounty.status] and bounty.updated < cutoff then
-            RC.db.bounties[key] = nil
+            RC.guild.bounties[key] = nil
         end
     end
-    for key, guild in pairs(RC.db.kosGuilds) do
+    for key, guild in pairs(RC.guild.kosGuilds) do
         if guild.removedBy and guild.updated < cutoff then
-            RC.db.kosGuilds[key] = nil
+            RC.guild.kosGuilds[key] = nil
         end
     end
 end
@@ -933,6 +946,8 @@ events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 events:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_LOGIN" then
+        -- Make sure this guild's lists are loaded before touching them
+        RC:SelectGuildData()
         Purge()
         if IsInGuild() then
             C_GuildInfo.GuildRoster()

@@ -27,7 +27,7 @@ local function FormatEntry(entry)
 end
 
 function SyncLog:Add(text)
-    local log = RC.db.syncLog
+    local log = RC.guild.syncLog
     table.insert(log, { time = time(), text = text })
     while #log > MAX_ENTRIES do
         table.remove(log, 1)
@@ -82,7 +82,7 @@ local function Flush(key)
     end
     text = text .. NamesText(batch.names)
     if batch.applied > 0 then
-        RC.db.lastSyncReceived = time()
+        RC.guild.lastSyncReceived = time()
     end
     SyncLog:Add(text)
 end
@@ -137,17 +137,17 @@ function SyncLog:UpdateSummary()
         return
     end
     local gankers, guilds, bounties = 0, 0, 0
-    for _, ganker in pairs(RC.db.gankers) do
+    for _, ganker in pairs(RC.guild.gankers) do
         if not ganker.removedBy then
             gankers = gankers + 1
         end
     end
-    for _, guild in pairs(RC.db.kosGuilds) do
+    for _, guild in pairs(RC.guild.kosGuilds) do
         if not guild.removedBy then
             guilds = guilds + 1
         end
     end
-    for _, bounty in pairs(RC.db.bounties) do
+    for _, bounty in pairs(RC.guild.bounties) do
         if bounty.status == "open" or bounty.status == "claimed" or bounty.status == "denied" then
             bounties = bounties + 1
         end
@@ -155,7 +155,7 @@ function SyncLog:UpdateSummary()
     self.summary:SetText(
         "Gankers: |cffffffff" .. gankers .. "|r     KOS guilds: |cffffffff" .. guilds ..
         "|r     Open bounties: |cffffffff" .. bounties .. "|r\n" ..
-        "Last update from a guildmate: |cffffffff" .. TimeAgo(RC.db.lastSyncReceived) .. "|r")
+        "Last update from a guildmate: |cffffffff" .. TimeAgo(RC.guild.lastSyncReceived) .. "|r")
 end
 
 local function Button(parent, label, width, onClick)
@@ -194,7 +194,7 @@ function SyncLog:CreatePage()
     syncNow:SetPoint("TOPLEFT", self.summary, "BOTTOMLEFT", 0, -14)
 
     local clear = Button(frame, "Clear Log", 110, function()
-        wipe(RC.db.syncLog)
+        wipe(RC.guild.syncLog)
         SyncLog.messages:Clear()
     end)
     clear:SetPoint("LEFT", syncNow, "RIGHT", 8, 0)
@@ -225,7 +225,7 @@ function SyncLog:CreatePage()
 
     frame:SetScript("OnShow", function()
         messages:Clear()
-        for _, entry in ipairs(RC.db.syncLog) do
+        for _, entry in ipairs(RC.guild.syncLog) do
             messages:AddMessage(FormatEntry(entry))
         end
         SyncLog:UpdateSummary()

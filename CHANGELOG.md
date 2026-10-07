@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Ganker lists are kept per guild. Before, the list was saved account-wide, so an alt in another guild saw your main guild's list and could send it to that guild during a sync. Existing lists move into the guild you're in at your next login
 - Login message with the version and author, 10 seconds after you log in
 - Sync page in settings: counts, a Sync Now button, and a log of who sent you updates (with the names in each batch), who you sent updates to, and ignored changes
 - Guilds list: the Added by name no longer gets cut off

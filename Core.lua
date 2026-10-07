@@ -76,10 +76,8 @@ local DEFAULTS = {
     panelPoint = nil,
     muted = {},
     log = {},
-    gankers = {},
-    bounties = {},
-    kosGuilds = {},
-    syncLog = {},
+    -- Ganker list, bounties, KOS guilds, and sync log, one bucket per guild
+    guilds = {},
     kosWarn = true,
     kosAutoAdd = true,
 }
@@ -504,6 +502,65 @@ end
 -- Events
 ----------------------------------------------------------------------
 
+----------------------------------------------------------------------
+-- Per-guild data
+-- SavedVariables are account-wide, so the shared lists are kept per guild.
+-- An alt in another guild never sees this guild's list, and never sends it
+-- to their guild when answering a sync.
+----------------------------------------------------------------------
+
+local GUILD_LISTS = { "gankers", "bounties", "kosGuilds", "syncLog" }
+
+local function NewGuildData()
+    local data = {}
+    for _, key in ipairs(GUILD_LISTS) do
+        data[key] = {}
+    end
+    return data
+end
+
+-- Throwaway lists for when there's no guild (or it hasn't loaded yet)
+RC.guild = NewGuildData()
+
+function RC:SelectGuildData()
+    local guildName = IsInGuild() and RC.Readable(GetGuildInfo("player")) or nil
+    if guildName == self.guildName and (guildName or not IsInGuild()) then
+        return
+    end
+    if IsInGuild() and not guildName then
+        -- In a guild, but its name hasn't loaded yet; GUILD_ROSTER_UPDATE retries
+        return
+    end
+    self.guildName = guildName
+    if not guildName then
+        self.guild = NewGuildData()
+    else
+        local key = guildName:lower()
+        local data = self.db.guilds[key]
+        if not data then
+            data = NewGuildData()
+            self.db.guilds[key] = data
+            -- Lists saved before they were kept per guild belong to this one
+            for _, list in ipairs(GUILD_LISTS) do
+                if type(self.db[list]) == "table" then
+                    data[list] = self.db[list]
+                    self.db[list] = nil
+                end
+            end
+            data.lastSyncReceived, self.db.lastSyncReceived = self.db.lastSyncReceived, nil
+        end
+        for _, list in ipairs(GUILD_LISTS) do
+            data[list] = data[list] or {}
+        end
+        data.name = guildName
+        self.guild = data
+    end
+    self:Debug("using saved lists for " .. (guildName or "no guild"))
+    if self.Gankers then
+        self.Gankers:OnGuildChanged()
+    end
+end
+
 local function ApplyDefaults(db, defaults)
     for key, value in pairs(defaults) do
         if db[key] == nil then
@@ -517,6 +574,8 @@ events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("CHAT_MSG_ADDON")
 events:RegisterEvent("GROUP_ROSTER_UPDATE")
+events:RegisterEvent("PLAYER_GUILD_UPDATE")
+events:RegisterEvent("GUILD_ROSTER_UPDATE")
 events:SetScript("OnEvent", function(_, event, ...)
     if event == "ADDON_LOADED" then
         if ... ~= addonName then
@@ -528,6 +587,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         C_ChatInfo.RegisterAddonMessagePrefix(RC.PREFIX)
         RC.Options:Register()
     elseif event == "PLAYER_LOGIN" then
+        RC:SelectGuildData()
         RC.Panel:Create()
         RC.MinimapButton:Create()
         -- Wait for the login chat spam to settle
@@ -542,6 +602,8 @@ events:SetScript("OnEvent", function(_, event, ...)
         RC:OnAddonMessage(...)
     elseif event == "GROUP_ROSTER_UPDATE" then
         RC:FlushPendingInvites()
+    elseif event == "PLAYER_GUILD_UPDATE" or event == "GUILD_ROSTER_UPDATE" then
+        RC:SelectGuildData()
     end
 end)
 

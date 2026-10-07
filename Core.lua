@@ -47,7 +47,7 @@ RC.ALERTS = {
         label = "Hunt Ganker",
         verb = "is hunting a ganker",
         tooltip = "Rally a hunting party. Your enemy player target is sent as the ganker.",
-        color = "|cffa335ee",
+        color = "|cff3399ff",
         sound = SOUNDKIT.RAID_WARNING,
     },
     CLEAR = {

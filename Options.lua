@@ -90,6 +90,9 @@ function Options:Register()
         function(value) RC.MinimapButton:SetShown(value) end)
 
     Settings.RegisterAddOnCategory(category)
+    if Settings.RegisterCanvasLayoutSubcategory then
+        Settings.RegisterCanvasLayoutSubcategory(category, RC.SyncLog:CreatePage(), "Sync")
+    end
     self:RegisterAbout(category)
 end
 

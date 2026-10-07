@@ -74,12 +74,13 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 
 <p align="center"><img src="docs/images/settings.png" alt="Rallying Cry settings under Options, AddOns" width="640"></p>
 
-- **Settings page**: ESC > Options > AddOns > Rallying Cry, the gear on the panel, `/rc settings`, or right-click Rallying Cry in the addon compartment. Every option below is there as a checkbox, plus an **About** page
+- **Settings page**: ESC > Options > AddOns > Rallying Cry, the gear on the panel, `/rc settings`, or right-click Rallying Cry in the addon compartment. Every option below is there as a checkbox, plus a **Sync** page and an **About** page
 - **Minimap button**: left-click toggles the panel, Shift-click opens the ganker list, right-click opens settings, drag to move. Hover to see the last alert. On by default, turn it off in settings or with `/rc minimap`
 - **Button panel**: draggable, one click per alert plus a Ganker List button and a settings gear. Works in combat. `/rc panel` to show or hide
 - **Keybindings**: ESC > Options > Keybindings > AddOns > Rallying Cry. Bind any of the four alerts, waypoint to last alert, the panel, or the ganker list
 - **Waypoints**: `/rc go` pins the last alert on your map and tracks it. `/rc waypoint` does it automatically for every alert
 - **Alert log**: `/rc log` shows the last 10 alerts, saved across sessions
+- **Sync page**: Options > AddOns > Rallying Cry > Sync shows how many gankers, KOS guilds, and bounties you have, a **Sync Now** button, and a log of who sent you updates, what was in them, who you sent updates to, and any changes that were ignored
 - **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the window, banner, and sound
 - **Spam guard**: 10 second cooldown between your alerts, and repeat alerts from the same person get dropped. All Clear skips the cooldown but only works while you have an alert out
 
@@ -149,7 +150,7 @@ Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddO
 | Guildmates don't see my alerts | They need Rallying Cry installed and enabled. Alerts also can't send during a dungeon boss fight or a PvP match |
 | No invite after clicking Accept | The sender has to lead their group (or not be in one), and you can't already be in a group. You'll get a message saying which |
 | Alert has no coordinates | The sender was in an instance, where the game hides positions |
-| Ganker list is empty on a new character | It fills in from guildmates (gankers, KOS guilds, and bounties) within about 20 seconds of logging in. Someone with the list has to be online |
+| Ganker list is empty on a new character | It fills in from guildmates (gankers, KOS guilds, and bounties) within about 20 seconds of logging in. Someone with the list has to be online. Check the **Sync** page in settings to see who answered, or click **Sync Now** |
 | Can't add a KOS guild | Only officers (ranks with the Remove Member permission) can add or remove KOS guilds |
 | A numbered guild isn't flagged | KOS guilds added before the numbered option only match exactly. Add the guild again with the box ticked |
 | Panel or minimap button missing | `/rc panel` or `/rc minimap`, or check the settings page |

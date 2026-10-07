@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Login message with the version and author, plus a tip, a few seconds after you log in
+- Login message with the version and author, plus a tip, 10 seconds after you log in
+- Sync page in settings: counts, a Sync Now button, and a log of who sent you updates (with the names in each batch), who you sent updates to, and ignored changes
 - Guilds list: the Added by name no longer gets cut off
 - Panel order: Ganker List sits above All Clear, which is now at the bottom
 - KOS guild families: adding Olympus also covers Olympus 2, Olympus II, and so on, and Olympus* covers every guild starting with Olympus. Add Guild fills in the base name when you target a numbered guild

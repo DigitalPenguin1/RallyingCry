@@ -682,11 +682,12 @@ RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, last
             return
         end
         if not Gankers:CanRemove(record.removedBy, record) then
-            RC:Debug("ignored removal of " .. record.name .. " by " .. record.removedBy)
+            RC.SyncLog:Add("Ignored " .. RC.DisplayName(sender) .. "'s removal of " .. RC.DisplayName(record.name) ..
+                " (" .. RC.DisplayName(record.removedBy) .. " can't remove it)")
             return
         end
     end
-    Gankers:MergeGanker(record)
+    RC.SyncLog:CountRecord(sender, relay == "r", "KOS", Gankers:MergeGanker(record), RC.DisplayName(record.name))
 end
 
 RC.MessageHandlers.BNTY = function(_, sender, relay, name, poster, gold, status, claimant, updated)
@@ -706,9 +707,11 @@ RC.MessageHandlers.BNTY = function(_, sender, relay, name, poster, gold, status,
     end
     -- Live changes come from the poster, or from the hunter making a claim
     if relay ~= "r" and sender ~= record.poster and not (status == "claimed" and sender == record.claimant) then
+        RC.SyncLog:Add("Ignored a bounty change from " .. RC.DisplayName(sender) .. " (not theirs to change)")
         return
     end
-    Gankers:MergeBounty(record, relay ~= "r")
+    RC.SyncLog:CountRecord(sender, relay == "r", "BNTY", Gankers:MergeBounty(record, relay ~= "r"),
+        RC.DisplayName(record.name))
 end
 
 RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updated, removedBy, reason, numbered)
@@ -731,10 +734,11 @@ RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updat
         return
     end
     if not Gankers:IsOfficer(actor) then
-        RC:Debug("ignored KOS guild change to <" .. record.name .. "> by non-officer " .. actor)
+        RC.SyncLog:Add("Ignored a KOS guild change to <" .. record.name .. "> from " .. RC.DisplayName(sender) ..
+            " (" .. RC.DisplayName(actor) .. " isn't an officer)")
         return
     end
-    Gankers:MergeGuild(record)
+    RC.SyncLog:CountRecord(sender, relay == "r", "KOSG", Gankers:MergeGuild(record), "<" .. record.name .. ">")
 end
 
 ----------------------------------------------------------------------
@@ -807,8 +811,15 @@ local function QueueRecords(records)
 end
 
 function Gankers:RequestSync()
-    if IsInGuild() then
-        RC:SendGuild(RC.Pack("SYNCREQ", Me(), self:LatestStamp()))
+    if not IsInGuild() then
+        return
+    end
+    local since = self:LatestStamp()
+    if RC:SendGuild(RC.Pack("SYNCREQ", Me(), since)) then
+        RC.SyncLog:Add(since == 0 and "Asked the guild for the full list" or
+            "Asked the guild for anything new since " .. date("%m/%d %H:%M", since))
+    else
+        RC.SyncLog:Add("Couldn't ask the guild for updates right now. Try Sync Now later.")
     end
 end
 
@@ -825,13 +836,18 @@ RC.MessageHandlers.SYNCREQ = function(_, sender, requester, since)
     pendingSync[requester] = C_Timer.NewTimer(delay, function()
         pendingSync[requester] = nil
         RC:SendGuild(RC.Pack("SYNCACK", requester, Gankers:LatestStamp()))
-        QueueRecords(RecordsSince(since))
-        RC:Debug("answering sync for " .. requester)
+        local records = RecordsSince(since)
+        QueueRecords(records)
+        RC.SyncLog:Add("Sending " .. #records .. (#records == 1 and " update" or " updates") .. " to |cffffffff" ..
+            RC.DisplayName(requester) .. "|r, who just logged in")
     end)
 end
 
 RC.MessageHandlers.SYNCACK = function(_, sender, requester, latest)
     requester = RC.NormalizeName(requester)
+    if requester == Me() then
+        RC.SyncLog:Add("|cffffffff" .. RC.DisplayName(sender) .. "|r is sending you updates")
+    end
     local timer = pendingSync[requester]
     -- Stand down unless we know about newer changes than the one answering
     if timer and Gankers:LatestStamp() <= (tonumber(latest) or 0) then

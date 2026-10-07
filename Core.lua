@@ -80,6 +80,7 @@ local DEFAULTS = {
     gankers = {},
     bounties = {},
     kosGuilds = {},
+    syncLog = {},
     kosWarn = true,
     kosAutoAdd = true,
 }
@@ -530,8 +531,8 @@ events:SetScript("OnEvent", function(_, event, ...)
     elseif event == "PLAYER_LOGIN" then
         RC.Panel:Create()
         RC.MinimapButton:Create()
-        -- Wait for the login chat spam to settle, like Classic Fishing Companion
-        C_Timer.After(3, function()
+        -- Wait for the login chat spam to settle
+        C_Timer.After(10, function()
             RC:Print(RC.COLORS.SUCCESS .. "Loaded!|r v" .. RC.VERSION .. " by |cff00ccffRelyk|r. " ..
                 "Click the minimap button or type " .. RC.COLORS.DEBUG .. "/rc|r for commands.")
             if IsInGuild() then

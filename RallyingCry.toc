@@ -13,6 +13,7 @@ Core.lua
 Theme.lua
 Alerts.lua
 Invites.lua
+SyncLog.lua
 Gankers.lua
 GankerList.lua
 Panel.lua

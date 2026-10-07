@@ -361,6 +361,7 @@ local function FillGankerRow(row, entry, me)
     row.ganker, row.guild = ganker, nil
     row.name:SetText(RC.DisplayName(ganker.name))
     row.reports:SetText(ganker.reports)
+    row.seen:SetWidth(COL_BOUNTY - COL_SEEN - 4)
     row.seen:SetText(TimeAgo(ganker.lastSeen))
     row.bounty:SetText(entry.bounty > 0 and RC.FormatGold(entry.bounty) or "|cff808080-|r")
     row.bountyButton:Show()
@@ -372,6 +373,8 @@ local function FillGuildRow(row, guild, me)
     row.ganker, row.guild = nil, guild
     row.name:SetText(RC.GuildLabel(guild))
     row.reports:SetText("")
+    -- Guild rows have no bounty, so "Added by" can use that column too
+    row.seen:SetWidth(COL_BUTTONS - COL_SEEN - 4)
     row.seen:SetText(RC.DisplayName(guild.addedBy))
     row.bounty:SetText("")
     row.bountyButton:Hide()

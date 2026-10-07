@@ -4,7 +4,7 @@ Call your guild for backup in **WoW: Forever**. One button tells every guildmate
 
 Alerts go over the hidden guild addon channel. Nobody outside your guild sees them, and you have to be in a guild to send or receive.
 
-<p align="center"><img src="docs/images/panel.png" alt="Rallying Cry button panel with Ganked!, World PvP, Hunt Ganker, All Clear, and Ganker List" width="170"></p>
+<p align="center"><img src="docs/images/panel.png" alt="Rallying Cry button panel with Ganked!, World PvP, Hunt Ganker, Ganker List, and All Clear" width="170"></p>
 
 > **WoW: Forever only.** Built for the Forever client (interface 16001). It won't load on Classic Era, and isn't supported on Retail.
 
@@ -40,7 +40,7 @@ The window closes on its own after 60 seconds, or when the sender calls All Clea
 
 The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the same list, and it catches you up on anything you missed when you log in.
 
-<p align="center"><img src="docs/images/ganker-list.png" alt="Ganker List window with Gankers and Guilds tabs" width="560"></p>
+<p align="center"><img src="docs/images/ganker-list.png" alt="Ganker List showing a ganker with a 3 gold bounty" width="560"></p>
 
 - **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker**, which opens a form for the name (or Use Target), an optional reason, and an optional bounty, or type `/rc kos add Name reason`
 - **Removing**: only the person who added them, or an officer, can take someone off. Officers are any rank with the guild's **Remove Member** permission
@@ -49,6 +49,8 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 - **Warnings**: target or mouse over a listed ganker, or a member of a KOS guild, and you get a chat warning and a sound, with their bounty
 - **KOS guilds**: officers can put a whole guild on KOS. Every member then counts as a ganker without being added one by one. Switch the list window to **Guilds**, click **Add Guild** (it fills in your target's guild), or type `/rc kos guild add Guild Name - reason`. Alerts show the ganker's guild and flag KOS guilds
 - **Guild families**: adding **Olympus** also covers numbered guilds like Olympus 2, Olympus II, and Olympus #3 (untick the box in the form for an exact match only). End a name with `*`, like **Olympus\***, to cover every guild that starts with it. Targeting a member of Olympus 2 and clicking Add Guild fills in Olympus. Entries that would cover your own guild are refused
+
+<p align="center"><img src="docs/images/kos-guilds.png" alt="Ganker List switched to Guilds, showing Olympus on KOS" width="560"></p>
 
 The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
 

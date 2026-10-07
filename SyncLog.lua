@@ -90,6 +90,10 @@ end
 -- Called for every ganker, bounty, or KOS guild record a guildmate sends.
 -- applied is false when we already had that version or newer.
 function SyncLog:CountRecord(sender, relay, kind, applied, label)
+    -- An import writes its own summary line
+    if self.muted then
+        return
+    end
     local key = sender .. (relay and ":sync" or ":live")
     local batch = batches[key]
     if not batch then
@@ -199,6 +203,16 @@ function SyncLog:CreatePage()
     end)
     clear:SetPoint("LEFT", syncNow, "RIGHT", 8, 0)
 
+    local export = Button(frame, "Export Backup", 120, function()
+        SyncLog:ShowBackup("export")
+    end)
+    export:SetPoint("LEFT", clear, "RIGHT", 24, 0)
+
+    local import = Button(frame, "Import Backup", 120, function()
+        SyncLog:ShowBackup("import")
+    end)
+    import:SetPoint("LEFT", export, "RIGHT", 8, 0)
+
     local box = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     box:SetPoint("TOPLEFT", syncNow, "BOTTOMLEFT", 0, -12)
     box:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 16)
@@ -247,4 +261,181 @@ function SyncLog:SyncNow()
     end
     self.lastManual = now
     RC.Gankers:RequestSync()
+end
+
+----------------------------------------------------------------------
+-- Backup window
+----------------------------------------------------------------------
+
+local IMPORT_POPUP = "RALLYINGCRY_CONFIRM_IMPORT"
+
+StaticPopupDialogs[IMPORT_POPUP] = {
+    text = "%s",
+    button1 = "Import",
+    button2 = "Cancel",
+    OnAccept = function(_, backup)
+        local count = RC.Gankers:Import(backup)
+        if count == 0 then
+            RC:Print("Nothing in that backup is newer than your list, so nothing changed.")
+        elseif count then
+            RC:Print("Restored " .. Plural(count, "entry", "entries") .. " from the backup. " ..
+                "They're being shared with your guild.")
+        end
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    showAlert = true,
+}
+
+local function Plural(n, one, many)
+    return n .. " " .. (n == 1 and one or many)
+end
+
+local function Summary(counts)
+    return Plural(counts.KOS, "ganker", "gankers") .. ", " .. Plural(counts.KOSG, "KOS guild", "KOS guilds") ..
+        ", " .. Plural(counts.BNTY, "bounty", "bounties")
+end
+
+function SyncLog:CreateBackupWindow()
+    local frame = CreateFrame("Frame", "RallyingCryBackup", UIParent, "BackdropTemplate")
+    frame:SetSize(520, 340)
+    frame:SetPoint("CENTER")
+    frame:SetFrameStrata("FULLSCREEN_DIALOG")
+    RC.Theme.SkinWindow(frame)
+    frame:EnableMouse(true)
+    frame:SetMovable(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:Hide()
+    table.insert(UISpecialFrames, "RallyingCryBackup")
+
+    frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    frame.title:SetPoint("TOPLEFT", 16, -14)
+    frame.title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
+
+    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+    close:SetPoint("TOPRIGHT", 0, 0)
+
+    frame.help = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    frame.help:SetPoint("TOPLEFT", frame.title, "BOTTOMLEFT", 0, -8)
+    frame.help:SetWidth(488)
+    frame.help:SetJustifyH("LEFT")
+
+    local box = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    box:SetPoint("TOPLEFT", 16, -70)
+    box:SetPoint("BOTTOMRIGHT", -16, 50)
+    box:SetBackdrop(RC.Theme.WINDOW_BACKDROP)
+    box:SetBackdropColor(0, 0, 0, 0.6)
+    box:SetBackdropBorderColor(RC.Theme.Color(RC.Theme.GOLD, 0.6))
+
+    local scroll = CreateFrame("ScrollFrame", nil, box, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 8, -8)
+    scroll:SetPoint("BOTTOMRIGHT", -28, 8)
+
+    local edit = CreateFrame("EditBox", nil, scroll)
+    edit:SetMultiLine(true)
+    edit:SetAutoFocus(false)
+    edit:SetFontObject("ChatFontSmall")
+    edit:SetWidth(440)
+    edit:SetMaxLetters(0)
+    edit:SetScript("OnEscapePressed", function()
+        frame:Hide()
+    end)
+    edit:SetScript("OnTextChanged", function(e, userInput)
+        -- The export text can't be edited by accident
+        if userInput and frame.mode == "export" then
+            e:SetText(frame.exportText)
+            e:HighlightText()
+        end
+    end)
+    scroll:SetScrollChild(edit)
+    frame.edit = edit
+
+    -- Clicking anywhere in the box focuses the text
+    box:EnableMouse(true)
+    box:SetScript("OnMouseDown", function()
+        edit:SetFocus()
+    end)
+
+    frame.status = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    frame.status:SetPoint("BOTTOMLEFT", 16, 20)
+    frame.status:SetWidth(300)
+    frame.status:SetJustifyH("LEFT")
+
+    frame.action = Button(frame, "", 110, function()
+        SyncLog:BackupAction()
+    end)
+    frame.action:SetPoint("BOTTOMRIGHT", -16, 14)
+
+    self.backupWindow = frame
+end
+
+function SyncLog:ShowBackup(mode)
+    if not self.backupWindow then
+        self:CreateBackupWindow()
+    end
+    local frame = self.backupWindow
+    frame.mode = mode
+    frame.status:SetText("")
+    frame.status:SetTextColor(1, 1, 1)
+
+    if mode == "export" then
+        local text, counts = RC.Gankers:ExportString()
+        if not text then
+            RC:Print(RC.COLORS.ERROR .. "Couldn't create a backup.|r")
+            return
+        end
+        frame.exportText = text
+        frame.title:SetText("Export Backup")
+        frame.help:SetText("Copy this text with Ctrl+C and keep it somewhere safe, like a Discord channel " ..
+            "or a text file. An officer can import it later to restore the guild's list.")
+        frame.status:SetText(Summary(counts) .. (RC.guildName and (" from <" .. RC.guildName .. ">") or ""))
+        frame.action:SetText("Select All")
+        frame.edit:SetText(text)
+        frame:Show()
+        frame.edit:SetFocus()
+        frame.edit:HighlightText()
+    else
+        if not RC.Gankers:IsOfficer(RC:PlayerFullName()) then
+            RC:Print(RC.COLORS.WARNING .. "Only officers can import a backup.|r")
+            return
+        end
+        frame.exportText = nil
+        frame.title:SetText("Import Backup")
+        frame.help:SetText("Paste a backup with Ctrl+V, then click Import. Newer changes in your current " ..
+            "list are kept, so an old backup can't undo anything.")
+        frame.action:SetText("Import")
+        frame.edit:SetText("")
+        frame:Show()
+        frame.edit:SetFocus()
+    end
+end
+
+function SyncLog:BackupAction()
+    local frame = self.backupWindow
+    if frame.mode == "export" then
+        frame.edit:SetFocus()
+        frame.edit:HighlightText()
+        return
+    end
+
+    local backup, problem = RC.Gankers:ReadBackup(frame.edit:GetText())
+    if not backup then
+        frame.status:SetText(problem)
+        frame.status:SetTextColor(1, 0.3, 0.3)
+        return
+    end
+
+    local text = "Import this backup?\n\n" .. Summary(backup.counts)
+    if backup.exported then
+        text = text .. "\nSaved " .. date("%m/%d/%Y %H:%M", backup.exported)
+    end
+    if backup.guild and RC.guildName and backup.guild:lower() ~= RC.guildName:lower() then
+        text = text .. "\n\n" .. RC.COLORS.WARNING .. "This backup is from <" .. backup.guild ..
+            ">, not <" .. RC.guildName .. ">. Its list will be shared with your guild.|r"
+    end
+    frame:Hide()
+    StaticPopup_Show(IMPORT_POPUP, text, nil, backup)
 end

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Backups: Export Backup turns the guild's ganker list, KOS guilds, and bounties into text you can save anywhere. Officers can import it to restore the list. Newer entries are kept, and restored entries are shared with the guild
 - Ganker lists are kept per guild. Before, the list was saved account-wide, so an alt in another guild saw your main guild's list and could send it to that guild during a sync. Existing lists move into the guild you're in at your next login
 - Login message with the version and author, 10 seconds after you log in
 - Sync page in settings: counts, a Sync Now button, and a log of who sent you updates (with the names in each batch), who you sent updates to, and ignored changes

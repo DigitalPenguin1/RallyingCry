@@ -637,6 +637,7 @@ local function PrintUsage()
     print("  /rc kos guild add <guild> [- reason] | /rc kos guild remove <guild>")
     print("  /rc bounty <name> <gold> - pledge gold on a ganker (0 withdraws)")
     print("  /rc claim <name> - claim the bounties on a ganker you killed")
+    print("  /rc export | /rc import - back up or restore the guild's ganker list (import: officers)")
     print("  /rc settings - open the settings page")
     print("  /rc panel - show/hide the button panel")
     print("  /rc minimap - show/hide the minimap button")
@@ -688,6 +689,10 @@ SlashCmdList["RALLYINGCRY"] = function(input)
         RC.Gankers:PostBounty(name or rest, gold)
     elseif cmd == "claim" then
         RC.Gankers:Claim(rest)
+    elseif cmd == "export" then
+        RC.SyncLog:ShowBackup("export")
+    elseif cmd == "import" then
+        RC.SyncLog:ShowBackup("import")
     elseif cmd == "settings" or cmd == "options" or cmd == "config" then
         RC.Options:Open()
     elseif cmd == "minimap" then

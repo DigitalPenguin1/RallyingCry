@@ -218,6 +218,9 @@ function Gankers:MergeGanker(record)
         return false
     end
     RC.guild.gankers[record.name] = record
+    if Gankers.imported then
+        table.insert(Gankers.imported, { updated = record.updated, payload = EncodeGanker(record, true) })
+    end
     Refresh()
     return true
 end
@@ -229,6 +232,9 @@ function Gankers:MergeGuild(record)
         return false
     end
     RC.guild.kosGuilds[key] = record
+    if Gankers.imported then
+        table.insert(Gankers.imported, { updated = record.updated, payload = EncodeGuild(record, true) })
+    end
     Refresh()
     return true
 end
@@ -240,6 +246,9 @@ function Gankers:MergeBounty(record, live)
         return false
     end
     RC.guild.bounties[key] = record
+    if Gankers.imported then
+        table.insert(Gankers.imported, { updated = record.updated, payload = EncodeBounty(record, true) })
+    end
     self:OnBountyChanged(record, previous, live)
     Refresh()
     return true
@@ -886,6 +895,112 @@ local function Purge()
             RC.guild.kosGuilds[key] = nil
         end
     end
+end
+
+----------------------------------------------------------------------
+-- Backup (export / import)
+-- A backup is every record written as its sync message, one per line,
+-- after a header line, then compressed and base64 encoded: "RC1:<data>".
+-- Importing feeds each line through the same checks as a sync, so the
+-- newest version still wins and an old backup can't undo newer changes.
+----------------------------------------------------------------------
+
+local BACKUP_PREFIX = "RC1:"
+
+function Gankers:ExportString()
+    local lines = { RC.Pack("BACKUP", RC.guildName or "", time()) }
+    local counts = { KOS = 0, BNTY = 0, KOSG = 0 }
+    for _, ganker in pairs(RC.guild.gankers) do
+        table.insert(lines, EncodeGanker(ganker, true))
+        counts.KOS = counts.KOS + 1
+    end
+    for _, bounty in pairs(RC.guild.bounties) do
+        table.insert(lines, EncodeBounty(bounty, true))
+        counts.BNTY = counts.BNTY + 1
+    end
+    for _, guild in pairs(RC.guild.kosGuilds) do
+        table.insert(lines, EncodeGuild(guild, true))
+        counts.KOSG = counts.KOSG + 1
+    end
+    local ok, encoded = pcall(function()
+        local packed = C_EncodingUtil.CompressString(table.concat(lines, "\n"))
+        return packed and C_EncodingUtil.EncodeBase64(packed)
+    end)
+    if not ok or not encoded then
+        return nil
+    end
+    return BACKUP_PREFIX .. encoded, counts
+end
+
+-- Reads a pasted backup. Returns { guild, exported, lines, counts } or nil
+-- plus a message saying what's wrong.
+function Gankers:ReadBackup(text)
+    text = (text or ""):gsub("%s", "")
+    if text == "" then
+        return nil, "Paste a backup first."
+    end
+    if text:sub(1, #BACKUP_PREFIX) ~= BACKUP_PREFIX then
+        return nil, "That isn't a Rallying Cry backup. It should start with " .. BACKUP_PREFIX
+    end
+    local ok, raw = pcall(function()
+        local packed = C_EncodingUtil.DecodeBase64(text:sub(#BACKUP_PREFIX + 1))
+        return packed and C_EncodingUtil.DecompressString(packed)
+    end)
+    if not ok or not raw then
+        return nil, "The backup is damaged or cut off. Make sure you copied all of it."
+    end
+    local lines = { strsplit("\n", raw) }
+    local _, kind, guild, exported = strsplit("~", lines[1] or "")
+    if kind ~= "BACKUP" then
+        return nil, "The backup is damaged or cut off. Make sure you copied all of it."
+    end
+    local backup = {
+        guild = guild ~= "" and guild or nil,
+        exported = tonumber(exported),
+        lines = {},
+        counts = { KOS = 0, BNTY = 0, KOSG = 0 },
+    }
+    for i = 2, #lines do
+        local recordKind = select(2, strsplit("~", lines[i]))
+        if backup.counts[recordKind] then
+            table.insert(backup.lines, lines[i])
+            backup.counts[recordKind] = backup.counts[recordKind] + 1
+        end
+    end
+    return backup
+end
+
+-- Officers only. Returns how many records were new, or nil if refused.
+function Gankers:Import(backup)
+    if not IsInGuild() then
+        RC:Print(RC.COLORS.ERROR .. "You need to be in a guild to import a backup.|r")
+        return nil
+    end
+    if not self:IsOfficer(Me()) then
+        RC:Print(RC.COLORS.WARNING .. "Only officers can import a backup.|r")
+        return nil
+    end
+    self.imported = {}
+    RC.SyncLog.muted = true
+    for _, line in ipairs(backup.lines) do
+        local fields = { strsplit("~", line) }
+        local handler = RC.MessageHandlers[fields[2]]
+        if handler then
+            -- "r" in the third field marks it as passed along, like a sync
+            handler(RC, Me(), select(3, unpack(fields)))
+        end
+    end
+    RC.SyncLog.muted = nil
+    local imported = self.imported
+    self.imported = nil
+
+    -- Share what was new with the rest of the guild
+    QueueRecords(imported)
+    RC.SyncLog:Add("Imported a backup" .. (backup.guild and (" of <" .. backup.guild .. ">") or "") ..
+        (backup.exported and (" from " .. date("%m/%d %H:%M", backup.exported)) or "") .. ": " ..
+        #imported .. " of " .. #backup.lines .. " entries were new" ..
+        (#imported > 0 and ", and they're being shared with the guild" or ""))
+    return #imported
 end
 
 ----------------------------------------------------------------------

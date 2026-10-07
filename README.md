@@ -106,6 +106,8 @@ Forever characters have a first name and a surname. Where a command takes a name
 /rc kos guild remove <guild>           officers only
 /rc bounty <name> <gold> pledge gold on a ganker (0 withdraws)
 /rc claim <name>        claim the bounties on a ganker you killed
+/rc export              copy a backup of the guild's list
+/rc import              restore a backup (officers only)
 /rc settings            open the settings page
 /rc panel               show/hide the button panel
 /rc minimap             show/hide the minimap button
@@ -155,7 +157,11 @@ There's no server. The ganker list, KOS guilds, and bounties live on every guild
 
 The **Sync** page in settings shows all of this as it happens: when you asked for updates, who answered, what they sent, who you sent updates to, and anything that was ignored. If the list ever looks behind, click **Sync Now**.
 
-The list survives as long as anyone in the guild still has it. If every member who ran Rallying Cry deletes their saved data, the list is gone.
+The list survives as long as anyone in the guild still has it. Deleting and reinstalling the addon doesn't touch it, since WoW keeps saved data in your `WTF` folder. It's only gone if every member who ran Rallying Cry loses their `WTF` folder.
+
+### Backups
+
+For a small guild, keep a backup. On the **Sync** page, click **Export Backup** (or type `/rc export`) and copy the text somewhere safe, like a Discord channel. To restore, an officer clicks **Import Backup** (or `/rc import`), pastes it, and confirms. Anything newer in the current list is kept, so an old backup can't undo recent changes, and whatever was restored is shared with the guild. A backup from a different guild gets a warning before it's imported.
 
 ## Install
 

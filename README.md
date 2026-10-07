@@ -140,6 +140,21 @@ Everything goes over the hidden guild addon channel, so only guildmates running 
 
 Nothing leaves the game. Rallying Cry has no website, account, or tracking.
 
+## How Sync Works
+
+There's no server. The ganker list, KOS guilds, and bounties live on every guildmate's computer, and Rallying Cry keeps the copies in step over the hidden guild addon channel.
+
+- **Changes go out right away.** When someone adds a ganker, posts a bounty, or removes a guild, every guildmate online gets it within a second or two
+- **Newest wins.** Every ganker, bounty, and KOS guild carries the time it last changed. If two copies disagree, the newer one is kept, so an old copy can't bring back something that was removed
+- **Catching up at login.** About 8 seconds after you log in, your client asks the guild for anything that changed since your newest entry. One guildmate answers, and the rest stay quiet so the guild channel isn't flooded. Someone with newer changes than the person answering still speaks up. Big catch-ups trickle in about one entry a second
+- **Offline is fine.** If you were offline when someone claimed your bounty, the claim reaches you at your next login and the Confirm/Deny window pops up then
+- **Rules are checked by everyone.** Each client checks changes against the guild roster before accepting them. Only officers can add or remove KOS guilds, and only the adder or an officer can remove a ganker, even when the change is passed along at login. Bounty changes are checked when they're made (only the poster can mark one paid), but not again when they're passed along at login
+- **Old removals are cleaned up.** Removed gankers and finished bounties are kept for 30 days so the removal reaches everyone, then deleted
+
+The **Sync** page in settings shows all of this as it happens: when you asked for updates, who answered, what they sent, who you sent updates to, and anything that was ignored. If the list ever looks behind, click **Sync Now**.
+
+The list survives as long as anyone in the guild still has it. If every member who ran Rallying Cry deletes their saved data, the list is gone.
+
 ## Install
 
 Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddOns/RallyingCry/RallyingCry.toc`, then restart the game. `_classic_beta_` is the beta folder; after launch, use the AddOns folder inside your Forever install.

@@ -13,6 +13,9 @@ local BUTTON_GAP = 4
 local PADDING = 10
 local TITLE_HEIGHT = 20
 
+-- Buttons top to bottom. "LIST" opens the ganker list; the rest send alerts.
+local PANEL_ORDER = { "HELP", "WPVP", "HUNT", "LIST", "CLEAR" }
+
 local function SavePosition(frame)
     local point, _, relativePoint, x, y = frame:GetPoint()
     RC.db.panelPoint = { point, relativePoint, x, y }
@@ -33,8 +36,7 @@ function Panel:Create()
         return
     end
 
-    -- One button per alert, plus the ganker list
-    local count = #RC.ALERT_ORDER + 1
+    local count = #PANEL_ORDER
     local frame = CreateFrame("Frame", "RallyingCryPanel", UIParent, "BackdropTemplate")
     frame:SetSize(BUTTON_WIDTH + PADDING * 2,
         TITLE_HEIGHT + PADDING + count * BUTTON_HEIGHT + (count - 1) * BUTTON_GAP + PADDING)
@@ -76,9 +78,15 @@ function Panel:Create()
     end)
     gear:SetScript("OnLeave", GameTooltip_Hide)
 
+    local listInfo = {
+        label = "Ganker List",
+        tooltip = "Open the guild's ganker list and KOS guilds.",
+        color = "|cffffd100",
+    }
+
     local previous
-    for _, alertType in ipairs(RC.ALERT_ORDER) do
-        local info = RC.ALERTS[alertType]
+    for _, key in ipairs(PANEL_ORDER) do
+        local info = key == "LIST" and listInfo or RC.ALERTS[key]
         local button = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
         button:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
         RC.Theme.SkinButton(button)
@@ -89,7 +97,11 @@ function Panel:Create()
         end
         button:SetText(info.color .. info.label .. "|r")
         button:SetScript("OnClick", function()
-            RC:SendAlert(alertType)
+            if key == "LIST" then
+                RC.GankerList:Toggle()
+            else
+                RC:SendAlert(key)
+            end
         end)
         button:SetScript("OnEnter", function(b)
             GameTooltip:SetOwner(b, "ANCHOR_LEFT")
@@ -100,15 +112,6 @@ function Panel:Create()
         button:SetScript("OnLeave", GameTooltip_Hide)
         previous = button
     end
-
-    local listButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    listButton:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-    RC.Theme.SkinButton(listButton)
-    listButton:SetPoint("TOP", previous, "BOTTOM", 0, -BUTTON_GAP)
-    listButton:SetText("|cffffd100Ganker List|r")
-    listButton:SetScript("OnClick", function()
-        RC.GankerList:Toggle()
-    end)
 
     RestorePosition(frame)
     self.frame = frame

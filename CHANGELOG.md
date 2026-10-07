@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Panel order: Ganker List sits above All Clear, which is now at the bottom
 - KOS guild families: adding Olympus also covers Olympus 2, Olympus II, and so on, and Olympus* covers every guild starting with Olympus. Add Guild fills in the base name when you target a numbered guild
 - Hunt Ganker is blue instead of purple
 - Slash commands that take a name (`/rc hunt`, `/rc kos add`, `/rc bounty`) read the full first name and surname

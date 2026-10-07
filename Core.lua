@@ -22,7 +22,6 @@ RC.COLORS = {
     ERROR = "|cffff0000",
     WARNING = "|cffffff00",
     DEBUG = "|cffff8800",
-    TIP = "|cffffcc00",
     INFO = "|cffaaaaaa",
     RESET = "|r",
 }
@@ -535,9 +534,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         C_Timer.After(10, function()
             RC:Print(RC.COLORS.SUCCESS .. "Loaded!|r v" .. RC.VERSION .. " by |cff00ccffRelyk|r. " ..
                 "Click the minimap button or type " .. RC.COLORS.DEBUG .. "/rc|r for commands.")
-            if IsInGuild() then
-                RC:Print(RC.COLORS.TIP .. "Tip:|r Shift-click the minimap button to open the ganker list.")
-            else
+            if not IsInGuild() then
                 RC:Print(RC.COLORS.INFO .. "You're not in a guild, so alerts are off until you join one.|r")
             end
         end)

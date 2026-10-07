@@ -13,12 +13,26 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 ## Quick Start
 
 1. Install the addon and join a guild. Your guildmates need Rallying Cry too
-2. Use the button panel, the minimap button, or `/rc gank` when you're in trouble
+2. Click the **Rallying Cry minimap button** to open the alert panel, and press **Ganked!** when you're in trouble
 3. When a guildmate calls for help, click **Accept** to join their group and get a waypoint to them
+
+You never have to type a command. The minimap button does it all:
+
+| Minimap button | What it does |
+|---|---|
+| **Left-click** | Show or hide the alert panel |
+| **Shift-click** | Open the ganker list |
+| **Right-click** | Open settings |
+| **Hover** | See the last alert |
+| **Drag** | Move it around the minimap |
+
+Slash commands are there too, if you prefer typing or want to put alerts in a macro.
 
 ## Alerts
 
-| Alert | Command | What guildmates see |
+Click a button on the panel to send an alert, or bind it to a key. The command column is optional.
+
+| Alert | Or type | What guildmates see |
 |---|---|---|
 | **Ganked!** | `/rc gank [note]` | You're being ganked, plus your zone, subzone, and coordinates |
 | **World PvP** | `/rc wpvp [note]` | There's a fight at your location |
@@ -69,7 +83,9 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 - **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the window, banner, and sound
 - **Spam guard**: 10 second cooldown between your alerts, and repeat alerts from the same person get dropped. All Clear skips the cooldown but only works while you have an alert out
 
-## All commands
+## Slash Commands (optional)
+
+Everything below is also on the minimap button, the panel, or the settings page. Commands are handy for macros and keybind addons.
 
 Forever characters have a first name and a surname. Where a command takes a name, type both, like `/rc hunt Gankzor Blackhand camping the docks`.
 

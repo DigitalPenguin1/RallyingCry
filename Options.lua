@@ -24,6 +24,18 @@ local function AddDBCheckbox(category, key, name, tooltip)
         function(value) RC.db[key] = value end)
 end
 
+-- One checkbox per sound. Keys are alert types, plus KOS for the ganker warning.
+local SOUND_OPTIONS = {
+    { key = "HELP", label = "Ganked! (zeppelin horn)",
+      tooltip = "Play the zeppelin horn when a guildmate is being ganked." },
+    { key = "WPVP", label = "World PvP (ready check)",
+      tooltip = "Play the ready check sound when a guildmate finds world PvP." },
+    { key = "HUNT", label = "Hunt Ganker (zeppelin horn)",
+      tooltip = "Play the zeppelin horn when a guildmate rallies a hunting party." },
+    { key = "KOS", label = "Ganker spotted (raid warning)",
+      tooltip = "Play the raid warning when you target or mouse over a listed ganker or a KOS guild member." },
+}
+
 function Options:Register()
     if self.category or not (Settings and Settings.RegisterVerticalLayoutCategory) then
         return
@@ -37,13 +49,20 @@ function Options:Register()
         "Pop up a window for Ganked!, World PvP, and Hunt alerts. Accept joins the sender's group and sets a waypoint.")
     AddDBCheckbox(category, "banner", "Screen banner",
         "Show alerts in the middle of the screen like a raid warning.")
-    AddDBCheckbox(category, "sound", "Sound",
-        "Play a sound when an alert comes in.")
     AddCheckbox(category, "autoWaypoint", "Auto-waypoint",
         "Put a map waypoint on every alert as it arrives, without needing to Accept.",
         false,
         function() return RC.db.autoWaypoint end,
         function(value) RC.db.autoWaypoint = value end)
+
+    AddHeader(layout, "Sounds")
+    AddDBCheckbox(category, "sound", "Sounds",
+        "Play sounds for alerts and ganker warnings. Turn off to silence all of them; the boxes below turn off one at a time.")
+    for _, sound in ipairs(SOUND_OPTIONS) do
+        AddCheckbox(category, "sound" .. sound.key, sound.label, sound.tooltip, true,
+            function() return not RC.db.quietSounds[sound.key] end,
+            function(value) RC.db.quietSounds[sound.key] = (not value) or nil end)
+    end
 
     AddHeader(layout, "Alert Types")
     for _, alertType in ipairs(RC.ALERT_ORDER) do

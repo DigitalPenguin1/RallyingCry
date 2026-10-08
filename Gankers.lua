@@ -1053,7 +1053,7 @@ function Gankers:CheckUnit(unit)
     end
     RC:Print(text)
     UIErrorsFrame:AddMessage(text)
-    if RC.db.sound then
+    if RC:SoundOn("KOS") then
         PlaySound(SOUNDKIT.RAID_WARNING, "Master")
     end
 end

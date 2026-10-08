@@ -82,6 +82,7 @@ Open the list from the **Ganker List** button on the panel, Shift-click the mini
 - **Alert log**: `/rc log` shows the last 10 alerts, saved across sessions
 - **Sync page**: Options > AddOns > Rallying Cry > Sync shows how many gankers, KOS guilds, and bounties you have, a **Sync Now** button, and a log of who sent you updates, what was in them, who you sent updates to, and any changes that were ignored
 - **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the window, banner, and sound
+- **Sounds**: Ganked! and Hunt Ganker play the zeppelin horn, World PvP plays the ready check, and the ganker warning plays the raid warning. Each can be turned off in settings under **Sounds**, or all at once with `/rc sound`
 - **Spam guard**: 10 second cooldown between your alerts, and repeat alerts from the same person get dropped. All Clear skips the cooldown but only works while you have an alert out
 
 <p align="center"><img src="docs/images/sync.png" alt="Sync page in settings with counts, Sync Now and Clear Log buttons, and the sync log" width="640"></p>

@@ -77,6 +77,8 @@ local DEFAULTS = {
     debug = false,
     panelPoint = nil,
     muted = {},
+    -- Sounds turned off one at a time: an alert type, or KOS for the ganker warning
+    quietSounds = {},
     log = {},
     -- Ganker list, bounties, KOS guilds, and sync log, one bucket per guild
     guilds = {},
@@ -90,6 +92,12 @@ local SEND_COOLDOWN = 10
 -- How long your alert stays active: guildmates can answer it, and you can
 -- call it off with All Clear
 RC.ACTIVE_ALERT_WINDOW = 600
+
+-- Whether a sound should play: "sound" is the master switch, quietSounds
+-- turns off one alert type's sound (or KOS, the ganker warning)
+function RC:SoundOn(key)
+    return self.db.sound and not self.db.quietSounds[key]
+end
 
 -- Max length of the free-text note
 local NOTE_MAX = 100

@@ -48,6 +48,8 @@ local pendingSync = {}
 local sendQueue = {}
 local sendTicker
 local shownClaims = {}
+-- Set once the login sync is scheduled; guild changes after that ask on their own
+local loginSyncScheduled = false
 
 ----------------------------------------------------------------------
 -- Helpers
@@ -876,6 +878,12 @@ function Gankers:OnGuildChanged()
         pendingSync[requester] = nil
     end
     Refresh()
+    -- Joined a guild mid-session: fetch its list instead of waiting for a relog
+    if loginSyncScheduled and RC.guildName then
+        C_Timer.After(3, function()
+            Gankers:RequestSync()
+        end)
+    end
 end
 
 local function Purge()
@@ -1072,6 +1080,7 @@ events:SetScript("OnEvent", function(_, event)
                 Gankers:ShowPendingClaims()
             end)
         end
+        loginSyncScheduled = true
     elseif event == "GUILD_ROSTER_UPDATE" then
         Gankers:RefreshRoster()
     elseif event == "PLAYER_TARGET_CHANGED" then

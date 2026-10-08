@@ -527,19 +527,28 @@ function RC:SelectGuildData()
     if guildName == self.guildName and (guildName or not IsInGuild()) then
         return
     end
-    if IsInGuild() and not guildName then
-        -- In a guild, but its name hasn't loaded yet; GUILD_ROSTER_UPDATE retries
+    -- Forever still has a realm per ruleset behind the scenes ("ClassicBetaPvP2"),
+    -- and guild names are only unique within a realm and faction
+    local realm = GetNormalizedRealmName()
+    local faction = UnitFactionGroup("player")
+    if IsInGuild() and not (guildName and realm and faction) then
+        -- In a guild, but it hasn't loaded yet; GUILD_ROSTER_UPDATE retries
         return
     end
     self.guildName = guildName
     if not guildName then
         self.guild = NewGuildData()
     else
-        local key = guildName:lower()
+        local key = realm:lower() .. "|" .. faction:lower() .. "|" .. guildName:lower()
         local data = self.db.guilds[key]
         if not data then
+            -- Lists saved under the guild name alone, before realm and faction
+            -- were part of the key
+            data = self.db.guilds[guildName:lower()]
+            self.db.guilds[guildName:lower()] = nil
+        end
+        if not data then
             data = NewGuildData()
-            self.db.guilds[key] = data
             -- Lists saved before they were kept per guild belong to this one
             for _, list in ipairs(GUILD_LISTS) do
                 if type(self.db[list]) == "table" then
@@ -549,6 +558,7 @@ function RC:SelectGuildData()
             end
             data.lastSyncReceived, self.db.lastSyncReceived = self.db.lastSyncReceived, nil
         end
+        self.db.guilds[key] = data
         for _, list in ipairs(GUILD_LISTS) do
             data[list] = data[list] or {}
         end

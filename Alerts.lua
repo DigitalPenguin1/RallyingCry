@@ -156,9 +156,11 @@ function RC:HandleAlert(alert)
         ShowBanner(text)
     end
 
-    local sound = RC.ALERTS[alert.type].sound
-    if self.db.sound and sound then
-        PlaySound(sound, "Master")
+    local info = RC.ALERTS[alert.type]
+    if self.db.sound and info.soundFile then
+        PlaySoundFile(info.soundFile, "Master")
+    elseif self.db.sound and info.sound then
+        PlaySound(info.sound, "Master")
     end
 
     if self.db.autoWaypoint then

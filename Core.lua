@@ -34,7 +34,8 @@ RC.ALERTS = {
         verb = "is being ganked",
         tooltip = "Call guildmates to your location.",
         color = "|cffff3333",
-        sound = SOUNDKIT.RAID_WARNING,
+        -- Zeppelin horn, by FileDataID
+        soundFile = 566719,
     },
     WPVP = {
         label = "World PvP",
@@ -48,7 +49,8 @@ RC.ALERTS = {
         verb = "is hunting a ganker",
         tooltip = "Rally a hunting party. Your enemy player target is sent as the ganker.",
         color = "|cff3399ff",
-        sound = SOUNDKIT.RAID_WARNING,
+        -- Zeppelin horn, by FileDataID
+        soundFile = 566719,
     },
     CLEAR = {
         label = "All Clear",

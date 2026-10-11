@@ -8,7 +8,7 @@ local addonName = ...
 RallyingCry = {}
 local RC = RallyingCry
 
-RC.VERSION = "0.4.0"
+RC.VERSION = "0.5.0"
 
 -- Addon message prefix (16 characters max)
 RC.PREFIX = "RallyingCry"

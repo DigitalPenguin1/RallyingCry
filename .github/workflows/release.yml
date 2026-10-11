@@ -1,0 +1,29 @@
+# Pushing a version tag (e.g. v0.5.0) builds the addon zip with the BigWigs
+# packager and uploads it to CurseForge and GitHub Releases.
+#
+# Needs, under Settings > Secrets and variables > Actions:
+#   CF_API_KEY  CurseForge API token (curseforge.com > Account > API tokens)
+# and the CurseForge project ID as "## X-Curse-Project-ID:" in RallyingCry.toc.
+# GITHUB_TOKEN is provided automatically.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: BigWigsMods/packager@v2

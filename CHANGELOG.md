@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
 
 - Ganker list: the window title says KOS Guilds on the Guilds tab
 - Ganker list: targeting or mousing over a listed ganker updates their Last seen time and zone for the guild (at most once every 5 minutes per ganker). Before, only alerts did, so gankers added by hand said "never" forever. Reports still only count alerts

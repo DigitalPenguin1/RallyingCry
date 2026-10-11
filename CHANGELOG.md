@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Ganker list: the window title says KOS Guilds on the Guilds tab
+- Ganker list: targeting or mousing over a listed ganker updates their Last seen time and zone for the guild (at most once every 5 minutes per ganker). Before, only alerts did, so gankers added by hand said "never" forever. Reports still only count alerts
+- Ganker list: paid bounties show on the tooltip (who paid whom, how much, when), and the Bounty column says Paid once nothing is left open. Before, a paid bounty just disappeared
 - Backups: Export Backup turns the guild's ganker list, KOS guilds, and bounties into text you can save anywhere. Officers can import it to restore the list. Newer entries are kept, and restored entries are shared with the guild
 - Ganker lists are kept per guild. Before, the list was saved account-wide, so an alt in another guild saw your main guild's list and could send it to that guild during a sync. Lists are matched by guild name, faction, and the ruleset realm the game reports, so same-named guilds on another ruleset or faction stay separate. Existing lists move into the guild you're in at your next login
 - Ganked! and Hunt Ganker alerts play the zeppelin horn instead of the raid warning sound

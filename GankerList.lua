@@ -25,6 +25,7 @@ local REMOVE_GUILD_POPUP = "RALLYINGCRY_CONFIRM_REMOVE_GUILD"
 -- in the wide last-seen column.
 local MODES = {
     gankers = {
+        title = "Ganker List",
         headers = { "Name", "Reports", "Last seen", "Bounty" },
         add = "Add Ganker",
         empty = "No gankers yet. They're added when a Ganked! or Hunt alert names one, or click Add Ganker.",
@@ -32,6 +33,7 @@ local MODES = {
         many = " gankers",
     },
     guilds = {
+        title = "KOS Guilds",
         headers = { "Guild", "", "Added by", "" },
         add = "Add Guild",
         empty = "No KOS guilds yet. Every member of a guild on this list counts as a ganker. Officers can add one with Add Guild.",
@@ -213,6 +215,17 @@ local function ShowRowTooltip(row)
                 1, 1, 1, 1, 1, 1)
         end
     end
+
+    local paid = RC.Gankers:PaidBounties(ganker.name)
+    if #paid > 0 then
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("Paid", 1, 0.82, 0)
+        for _, bounty in ipairs(paid) do
+            local to = bounty.claimant and (" " .. RC.DisplayName(bounty.claimant)) or ""
+            GameTooltip:AddDoubleLine(RC.DisplayName(bounty.poster) .. " paid" .. to ..
+                " (" .. TimeAgo(bounty.updated) .. ")", RC.FormatGold(bounty.gold), 0.8, 0.8, 0.8, 1, 1, 1)
+        end
+    end
     GameTooltip:Show()
 end
 
@@ -281,8 +294,9 @@ function List:Create()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", PADDING, -12)
-    title:SetText("Ganker List")
+    title:SetText(MODES.gankers.title)
     title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
+    self.title = title
 
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", 0, 0)
@@ -363,7 +377,11 @@ local function FillGankerRow(row, entry, me)
     row.reports:SetText(ganker.reports)
     row.seen:SetWidth(COL_BOUNTY - COL_SEEN - 4)
     row.seen:SetText(TimeAgo(ganker.lastSeen))
-    row.bounty:SetText(entry.bounty > 0 and RC.FormatGold(entry.bounty) or "|cff808080-|r")
+    if entry.bounty > 0 then
+        row.bounty:SetText(RC.FormatGold(entry.bounty))
+    else
+        row.bounty:SetText(entry.paid and "|cff808080Paid|r" or "|cff808080-|r")
+    end
     row.bountyButton:Show()
     row.claimButton:SetShown(RC.Gankers:CanClaim(ganker.name))
     row.removeButton:SetShown(RC.Gankers:CanRemove(me, ganker))
@@ -404,6 +422,8 @@ function List:Refresh()
             tab:UnlockHighlight()
         end
     end
+
+    self.title:SetText(MODES[self.mode].title)
 
     local guildMode = self.mode == "guilds"
     local entries = guildMode and RC.Gankers:SortedGuilds() or RC.Gankers:Sorted()

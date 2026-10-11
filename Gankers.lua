@@ -32,6 +32,10 @@ local SYNC_MAX_RECORDS = 150
 -- Don't repeat the "ganker spotted" warning for the same player within this many seconds
 local WARN_COOLDOWN = 60
 
+-- A sighting only updates Last seen if the guild's last one is older than
+-- this, so a ganker in a crowd of guildmates doesn't flood the guild channel
+local SIGHTING_INTERVAL = 5 * 60
+
 local MAX_BOUNTY = 1000000
 
 -- open: waiting for a hunter. claimed: hunter says they got the kill.
@@ -334,6 +338,25 @@ function Gankers:Report(name, zone, guild)
     })
 end
 
+-- You targeted or moused over a listed ganker: update when and where they
+-- were last seen. Unlike Report, this doesn't count as a report.
+function Gankers:Sighted(name, guild)
+    local current = self:Get(name)
+    if not current or not IsInGuild() then
+        return
+    end
+    if current.lastSeen and Now() - current.lastSeen < SIGHTING_INTERVAL then
+        return
+    end
+    local _, _, _, zone, subzone = RC:GetPlayerLocation()
+    local record = CopyTable(current)
+    record.lastSeen = Now()
+    record.zone = zone and (subzone and (subzone .. ", " .. zone) or zone) or current.zone
+    record.guild = guild or current.guild
+    record.updated = NextStamp(current)
+    Publish("KOS", record)
+end
+
 function Gankers:Add(name, reason)
     name = RC.NormalizeName(name)
     if not name then
@@ -594,6 +617,18 @@ function Gankers:ActiveBounties(name)
     return list, total
 end
 
+-- Paid-out bounties on a ganker, most recent first. Kept until the purge.
+function Gankers:PaidBounties(name)
+    local list = {}
+    for _, bounty in pairs(RC.guild.bounties) do
+        if bounty.name == name and bounty.status == "paid" then
+            table.insert(list, bounty)
+        end
+    end
+    table.sort(list, function(a, b) return a.updated > b.updated end)
+    return list
+end
+
 -- True if you can claim at least one bounty on this ganker
 function Gankers:CanClaim(name)
     local me = Me()
@@ -611,7 +646,7 @@ function Gankers:Sorted()
     for name, ganker in pairs(RC.guild.gankers) do
         if not ganker.removedBy then
             local _, total = self:ActiveBounties(name)
-            table.insert(rows, { ganker = ganker, bounty = total })
+            table.insert(rows, { ganker = ganker, bounty = total, paid = #self:PaidBounties(name) > 0 })
         end
     end
     table.sort(rows, function(a, b)
@@ -1016,15 +1051,19 @@ end
 ----------------------------------------------------------------------
 
 function Gankers:CheckUnit(unit)
-    if not RC.db.kosWarn then
-        return
-    end
     local name = RC:GetHostileUnitName(unit)
     if not name then
         return
     end
     local guild = RC:GetUnitGuild(unit)
     local ganker = self:Get(name)
+    -- Last seen updates even with warnings turned off
+    if ganker then
+        self:Sighted(name, guild)
+    end
+    if not RC.db.kosWarn then
+        return
+    end
     local kosGuild = guild and self:MatchGuild(guild)
     if not (ganker or kosGuild) then
         return

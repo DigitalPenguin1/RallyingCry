@@ -59,7 +59,7 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 - **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker**, which opens a form for the name (or Use Target), an optional reason, and an optional bounty, or type `/rc kos add First Surname reason`
 - **Removing**: only the person who added them, or an officer, can take someone off. Officers are any rank with the guild's **Remove Member** permission
 - **Bounties**: click **Bounty** on a row, or `/rc bounty First Surname 50`, to pledge 50 gold. Several guildmates can stack bounties on the same ganker. `/rc bounty First Surname 0` withdraws yours
-- **Claiming**: kill a ganker with a bounty, then click **Claim** or type `/rc claim First Surname`. Each poster gets a Confirm/Deny window (even if they were offline when you claimed). Confirm reminds them to mail you the gold
+- **Claiming**: kill a ganker with a bounty, then click **Claim** or type `/rc claim First Surname`. Each poster gets a Confirm/Deny window (even if they were offline when you claimed). Confirm reminds them to mail you the gold. Paid bounties stay on the ganker's tooltip for 30 days (who paid whom, how much, and when), and the Bounty column says **Paid** when there's no open bounty left
 - **Warnings**: target or mouse over a listed ganker, or a member of a KOS guild (including its numbered guilds), and you get a chat warning and a sound, with their bounty. Each player warns at most once a minute
 - **KOS guilds**: officers can put a whole guild on KOS. Every member then counts as a ganker without being added one by one. Switch the list window to **Guilds**, click **Add Guild** (it fills in your target's guild), or type `/rc kos guild add Guild Name - reason`. Alerts show the ganker's guild and flag KOS guilds
 - **Guild families**: adding **Olympus** also covers numbered guilds like Olympus 2, Olympus II, and Olympus #3 (untick the box in the form for an exact match only). End a name with `*`, like **Olympus\***, to cover every guild that starts with it. Targeting a member of Olympus 2 and clicking Add Guild fills in Olympus. Entries that would cover your own guild are refused
@@ -68,7 +68,9 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 
 The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
 
-Open the list from the **Ganker List** button on the panel, Shift-click the minimap button, a keybinding, or `/rc kos`. Gankers with the biggest bounty are listed first, and KOS guilds are listed A to Z. Hover a row for the reason, who added them, their guild, where they were last seen, and each bounty. Auto-adding and warnings can each be turned off in settings.
+Open the list from the **Ganker List** button on the panel, Shift-click the minimap button, a keybinding, or `/rc kos`. Gankers with the biggest bounty are listed first, and KOS guilds are listed A to Z. Hover a row for the reason, who added them, their guild, where they were last seen, each bounty, and bounties already paid.
+
+**Reports** counts the Ganked! and Hunt Ganker alerts sent while targeting that player. **Last seen** is the last time a guildmate ran into them: an alert, or just targeting or mousing over them. A sighting updates the time and zone for the whole guild, at most once every 5 minutes per ganker, and doesn't add a report. Gankers added by hand show **never** until someone runs into them. Auto-adding and warnings can each be turned off in settings.
 
 ## Features
 

@@ -52,6 +52,8 @@ Guildmates get a banner, a sound, and an **Accept / Decline** window. Accept set
 
 There's no server and no account. The list lives on every guildmate's computer and stays in step over the guild channel. Changes go out in a second or two, and you catch up on anything you missed when you log in. Each guild has its own list, so an alt in another guild never sees or sends your main guild's list. Officers can export a backup and restore it.
 
+![Sync page](https://raw.githubusercontent.com/DigitalPenguin1/RallyingCry/main/docs/images/sync.png)
+
 ## Getting around
 
 - **Minimap button**: left-click for the panel, Shift-click for the ganker list, right-click for settings

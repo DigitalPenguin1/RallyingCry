@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3
+
+- Add Ganker and Edit Ganker have a class picker. It's optional, and Use Target fills it in
+
 ## 0.5.2
 
 - Gankers show a class icon on the KOS list, and their class in the tooltip. The class is learned when a guildmate targets or mouses over them, sends an alert with them targeted, or adds them with Use Target, and it syncs to the guild. Older versions ignore it

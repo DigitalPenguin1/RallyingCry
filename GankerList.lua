@@ -39,6 +39,12 @@ local CLASS_ICONS = {
     DRUID = 625999,
 }
 
+-- Classes in the Add Ganker form's picker, by class ID
+local PICKER_CLASSES = {
+    { 1, "WARRIOR" }, { 2, "PALADIN" }, { 3, "HUNTER" }, { 4, "ROGUE" }, { 5, "PRIEST" },
+    { 7, "SHAMAN" }, { 8, "MAGE" }, { 9, "WARLOCK" }, { 11, "DRUID" },
+}
+
 local function ClassIcon(classID, size)
     local classFile = RC.ClassFile(classID)
     if not classFile then
@@ -594,6 +600,7 @@ function List:CreateAddForm()
         local target = RC:GetHostileTargetName()
         if target then
             form.name:SetText(RC.DisplayName(target))
+            form:SetClass(RC.UnitClassID("target") or form.class)
             form.error:SetText("")
         else
             form.error:SetText("Target an enemy player first.")
@@ -654,6 +661,39 @@ function List:CreateAddForm()
     form.bounty = FormInput(form, bountyLabel, 90, 7)
     form.bounty:SetNumeric(true)
 
+    -- Ganker mode only: class icons. Optional; click the picked one again to clear it.
+    form.classLabel = FormLabel(form, "Class |cff808080(optional)|r", bountyLabel, 34)
+    form.classButtons = {}
+    local previousClass
+    for _, entry in ipairs(PICKER_CLASSES) do
+        local classID, classFile = entry[1], entry[2]
+        -- Skip a class this client doesn't have
+        if RC.ClassFile(classID) == classFile then
+            local button = CreateFrame("Button", nil, form)
+            button:SetSize(26, 26)
+            if previousClass then
+                button:SetPoint("LEFT", previousClass, "RIGHT", 4, 0)
+            else
+                button:SetPoint("TOPLEFT", form.classLabel, "BOTTOMLEFT", 0, -6)
+            end
+            button.icon = button:CreateTexture(nil, "ARTWORK")
+            button.icon:SetAllPoints()
+            button.icon:SetTexture(CLASS_ICONS[classFile])
+            button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+            button:SetScript("OnClick", function()
+                form:SetClass(form.class ~= classID and classID or nil)
+            end)
+            button:SetScript("OnEnter", function()
+                GameTooltip:SetOwner(button, "ANCHOR_TOP")
+                GameTooltip:SetText(ClassName(classID) or classFile)
+                GameTooltip:Show()
+            end)
+            button:SetScript("OnLeave", GameTooltip_Hide)
+            form.classButtons[classID] = button
+            previousClass = button
+        end
+    end
+
     form.error = form:CreateFontString(nil, "OVERLAY", "GameFontRedSmall")
     form.error:SetPoint("TOPLEFT", bountyLabel, "BOTTOMLEFT", 0, -34)
     form.error:SetWidth(FORM_WIDTH - FORM_PADDING * 2)
@@ -697,6 +737,15 @@ function List:CreateAddForm()
         box:SetScript("OnEscapePressed", function()
             form:Hide()
         end)
+    end
+
+    function form:SetClass(classID)
+        self.class = classID
+        for id, button in pairs(self.classButtons) do
+            local picked = id == classID
+            button.icon:SetDesaturated(not picked)
+            button.icon:SetAlpha(picked and 1 or 0.45)
+        end
     end
 
     function form:SetFaction(faction)
@@ -750,12 +799,17 @@ function List:ShowAddForm(editing)
         button:SetShown(guildMode)
     end
     form.factionText:SetShown(guildMode)
-    form:SetHeight(guildMode and 290 or 250)
+    form.classLabel:SetShown(not guildMode)
+    for _, button in pairs(form.classButtons) do
+        button:SetShown(not guildMode)
+    end
+    form:SetClass(nil)
+    form:SetHeight(guildMode and 290 or 300)
     form.error:ClearAllPoints()
     if guildMode then
         form.error:SetPoint("TOPLEFT", form.factionLabel, "BOTTOMLEFT", 0, -16)
     else
-        form.error:SetPoint("TOPLEFT", form.bountyLabel, "BOTTOMLEFT", 0, -34)
+        form.error:SetPoint("TOPLEFT", form.classLabel, "BOTTOMLEFT", 0, -40)
     end
 
     local target = RC:GetHostileTargetName()
@@ -772,6 +826,7 @@ function List:ShowAddForm(editing)
         form:SetFaction(target and UnitFaction("target") or (listed and listed.faction))
     else
         form.name:SetText(target and RC.DisplayName(target) or "")
+        form:SetClass(target and RC.UnitClassID("target"))
     end
     form.reason:SetText("")
     form.bounty:SetText("")
@@ -782,6 +837,7 @@ function List:ShowAddForm(editing)
         form.name:SetText(RC.DisplayName(editing.name))
         form.bountyLabel:Hide()
         form.bounty:Hide()
+        form:SetClass(editing.class)
         form.reason:SetText(editing.reason or "")
         form:Show()
         form.reason:SetFocus()
@@ -832,7 +888,7 @@ function List:SubmitAddForm()
         return
     end
     if form.editing then
-        RC.Gankers:Add(form.editing.name, form.reason:GetText(), true)
+        RC.Gankers:Add(form.editing.name, form.reason:GetText(), true, form.class or false)
         form:Hide()
         return
     end
@@ -848,7 +904,7 @@ function List:SubmitAddForm()
     end
     local gold = tonumber(form.bounty:GetText())
 
-    RC.Gankers:Add(name, form.reason:GetText())
+    RC.Gankers:Add(name, form.reason:GetText(), false, form.class)
     if gold and gold > 0 then
         RC.Gankers:PostBounty(name, gold)
     end

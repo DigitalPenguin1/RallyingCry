@@ -390,8 +390,9 @@ function Gankers:Sighted(name, guild, class)
     Publish("KOS", record)
 end
 
--- A blank reason keeps the current one, unless replaceReason (editing)
-function Gankers:Add(name, reason, replaceReason)
+-- A blank reason keeps the current one, unless replaceReason (editing).
+-- class is a class ID, false to clear it, or nil to use your target's or keep it.
+function Gankers:Add(name, reason, replaceReason, class)
     name = RC.NormalizeName(name)
     if not name then
         RC:Print("Usage: /rc kos add <name> [reason]")
@@ -413,7 +414,7 @@ function Gankers:Add(name, reason, replaceReason)
         lastSeen = current and current.lastSeen,
         zone = current and current.zone,
         guild = current and current.guild,
-        class = SeenClass(name) or (current and current.class),
+        class = class == nil and (SeenClass(name) or (current and current.class)) or (RC.ClassFile(class) and class or nil),
         updated = NextStamp(RC.guild.gankers[name]),
     })
     RC:Print((current and "Updated " or "Added ") .. RC.COLORS.ERROR .. RC.DisplayName(name) ..

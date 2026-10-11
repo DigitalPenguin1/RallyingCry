@@ -15,7 +15,7 @@ links.
 
 # Summary
 
-Call your guild for backup in WoW: Forever. One click tells guildmates you're being ganked, where the world PvP is, or that you're hunting a ganker, with a shared ganker list, KOS guilds, and bounties.
+Call your guild for backup in WoW: Forever. One click tells guildmates you're being ganked, where the world PvP is, or that you're hunting a ganker, with a shared KOS list of gankers and guilds, plus bounties.
 
 # Description
 
@@ -36,15 +36,17 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 
 Guildmates get a banner, a sound, and an **Accept / Decline** window. Accept sets a waypoint to you and gets them invited to your group. A full party turns into a raid if you lead it.
 
-## Shared ganker list
+## Shared KOS list
 
-![Ganker List](https://raw.githubusercontent.com/DigitalPenguin1/RallyingCry/main/docs/images/ganker-list.png)
+![KOS List](https://raw.githubusercontent.com/DigitalPenguin1/RallyingCry/main/docs/images/ganker-list.png)
 
 - Anyone named in a Ganked! or Hunt alert is added to the guild's list automatically, or add them by hand
 - **Reports** and **Last seen**: see how often a ganker has been called out, and when and where a guildmate last ran into them
 - **Warnings** when you target or mouse over a listed ganker
 - **Bounties**: pledge gold on a ganker. The hunter claims it, the poster confirms and mails the gold, and paid bounties stay on record
 - **KOS guilds**: officers can put a whole guild on KOS, including its numbered spin-offs (Olympus 2, Olympus II) or every guild starting with a name
+- **Faction crests**: each KOS guild is marked Horde or Alliance, with its crest next to the name
+- **Edit** any entry with the gear on its row: change a ganker's reason, or a KOS guild's reason, matching, or faction
 
 ![KOS guilds](https://raw.githubusercontent.com/DigitalPenguin1/RallyingCry/main/docs/images/kos-guilds.png)
 
@@ -56,8 +58,8 @@ There's no server and no account. The list lives on every guildmate's computer a
 
 ## Getting around
 
-- **Minimap button**: left-click for the panel, Shift-click for the ganker list, right-click for settings
-- **Keybindings** for every alert, the panel, the ganker list, and the last alert's waypoint
+- **Minimap button**: left-click for the panel, Shift-click for the KOS list, right-click for settings
+- **Keybindings** for every alert, the panel, the KOS list, and the last alert's waypoint
 - **Settings** under ESC > Options > AddOns > Rallying Cry, with a Sync page that shows who sent you what
 - `/rc` lists every slash command, handy for macros
 

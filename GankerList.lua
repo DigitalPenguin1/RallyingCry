@@ -25,6 +25,10 @@ local REMOVE_GUILD_POPUP = "RALLYINGCRY_CONFIRM_REMOVE_GUILD"
 local FACTION_ICONS = { Horde = 2175464, Alliance = 2175463 }
 local FACTION_COLORS = { Horde = "|cffff4040", Alliance = "|cff4a9eff" }
 
+-- Row tooltips start this far right of the row, clear of the window's edge
+-- and close button
+local TOOLTIP_OFFSET = PADDING + 4
+
 local function FactionIcon(faction, size)
     local icon = faction and FACTION_ICONS[faction]
     return icon and ("|T" .. icon .. ":" .. size .. ":" .. size .. "|t ") or ""
@@ -177,8 +181,8 @@ end
 
 local function ShowGuildTooltip(row)
     local guild = row.guild
-    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
-    GameTooltip:SetText(FactionIcon(guild.faction, 18) .. "<" .. guild.name .. ">", 1, 0.2, 0.2)
+    GameTooltip:SetOwner(row, "ANCHOR_RIGHT", TOOLTIP_OFFSET, 0)
+    GameTooltip:SetText(FactionIcon(guild.faction, 22) .. "<" .. guild.name .. ">", 1, 0.2, 0.2)
     if guild.faction then
         GameTooltip:AddLine(FACTION_COLORS[guild.faction] .. guild.faction .. "|r")
     end
@@ -207,7 +211,7 @@ local function ShowRowTooltip(row)
     if not ganker then
         return
     end
-    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+    GameTooltip:SetOwner(row, "ANCHOR_RIGHT", TOOLTIP_OFFSET, 0)
     GameTooltip:SetText(RC.DisplayName(ganker.name), 1, 0.2, 0.2)
     if ganker.guild then
         local kos = RC.Gankers:MatchGuild(ganker.guild) and " |cffff3333(KOS guild)|r" or ""
@@ -409,6 +413,7 @@ end
 local function FillGankerRow(row, entry, me)
     local ganker = entry.ganker
     row.ganker, row.guild = ganker, nil
+    row.name:SetWidth(COL_REPORTS - 8)
     row.name:SetText(RC.DisplayName(ganker.name))
     row.reports:SetText(ganker.reports)
     row.seen:SetWidth(COL_BOUNTY - COL_SEEN - 4)
@@ -427,7 +432,9 @@ end
 
 local function FillGuildRow(row, guild, me)
     row.ganker, row.guild = nil, guild
-    row.name:SetText(FactionIcon(guild.faction, 14) .. RC.GuildLabel(guild))
+    -- Guild rows have no reports, so the name can use that column too
+    row.name:SetWidth(COL_SEEN - COL_NAME - 8)
+    row.name:SetText(FactionIcon(guild.faction, 20) .. RC.GuildLabel(guild))
     row.reports:SetText("")
     -- Guild rows have no bounty, so "Added by" can use that column too
     row.seen:SetWidth(COL_BUTTONS - COL_SEEN - 4)

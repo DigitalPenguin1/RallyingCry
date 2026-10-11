@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- KOS guild faction crests are bigger, and guild names get more room before they're cut off
+- KOS list tooltips open just outside the window instead of covering its close button
+
 ## 0.5.1
 
 - Edit button (the gear on each row) on the KOS list. Gankers: change the reason (whoever added them, or an officer). KOS guilds: change the reason, numbered matching, or faction (officers)

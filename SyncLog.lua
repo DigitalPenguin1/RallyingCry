@@ -184,7 +184,7 @@ function SyncLog:CreatePage()
     about:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
     about:SetWidth(560)
     about:SetJustifyH("LEFT")
-    about:SetText("The ganker list, KOS guilds, and bounties are shared with every guildmate running " ..
+    about:SetText("The KOS list (gankers, KOS guilds, and bounties) is shared with every guildmate running " ..
         "Rallying Cry. When you log in, you ask the guild for anything you missed.")
 
     self.summary = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")

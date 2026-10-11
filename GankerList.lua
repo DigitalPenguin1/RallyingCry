@@ -14,18 +14,34 @@ local PADDING = 12
 local HEADER_TOP = 40
 
 -- Column x offsets inside a row
-local COL_NAME, COL_REPORTS, COL_SEEN, COL_BOUNTY, COL_BUTTONS = 0, 150, 205, 330, 400
+local COL_NAME, COL_REPORTS, COL_SEEN, COL_BOUNTY, COL_BUTTONS = 0, 150, 205, 310, 380
 
 local BOUNTY_POPUP = "RALLYINGCRY_POST_BOUNTY"
 local CLAIM_POPUP = "RALLYINGCRY_CONFIRM_CLAIM"
 local REMOVE_POPUP = "RALLYINGCRY_CONFIRM_REMOVE"
 local REMOVE_GUILD_POPUP = "RALLYINGCRY_CONFIRM_REMOVE_GUILD"
 
+-- Round faction crests (ui_hordeicon-round, ui_allianceicon-round)
+local FACTION_ICONS = { Horde = 2175464, Alliance = 2175463 }
+local FACTION_COLORS = { Horde = "|cffff4040", Alliance = "|cff4a9eff" }
+
+local function FactionIcon(faction, size)
+    local icon = faction and FACTION_ICONS[faction]
+    return icon and ("|T" .. icon .. ":" .. size .. ":" .. size .. "|t ") or ""
+end
+
+-- Faction of a unit, or nil if unknown, hidden, or neutral
+local function UnitFaction(unit)
+    local ok, faction = pcall(UnitFactionGroup, unit)
+    faction = ok and RC.Readable(faction)
+    return faction and RC.FACTIONS[faction] and faction or nil
+end
+
 -- Per-mode labels. Guild rows reuse the ganker columns: name, then "Added by"
 -- in the wide last-seen column.
 local MODES = {
     gankers = {
-        title = "Ganker List",
+        title = "KOS List",
         headers = { "Name", "Reports", "Last seen", "Bounty" },
         add = "Add Ganker",
         empty = "No gankers yet. They're added when a Ganked! or Hunt alert names one, or click Add Ganker.",
@@ -129,7 +145,7 @@ StaticPopupDialogs[REMOVE_GUILD_POPUP] = {
 }
 
 StaticPopupDialogs[REMOVE_POPUP] = {
-    text = "Remove %s from the guild ganker list?",
+    text = "Remove %s from the guild KOS list?",
     button1 = "Remove",
     button2 = "Cancel",
     OnAccept = function(_, name)
@@ -162,7 +178,10 @@ end
 local function ShowGuildTooltip(row)
     local guild = row.guild
     GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
-    GameTooltip:SetText("<" .. guild.name .. ">", 1, 0.2, 0.2)
+    GameTooltip:SetText(FactionIcon(guild.faction, 18) .. "<" .. guild.name .. ">", 1, 0.2, 0.2)
+    if guild.faction then
+        GameTooltip:AddLine(FACTION_COLORS[guild.faction] .. guild.faction .. "|r")
+    end
     if guild.name:sub(-1) == "*" then
         GameTooltip:AddLine("Matches every guild starting with " .. guild.name:sub(1, -2), 1, 0.82, 0, true)
     elseif guild.numbered then
@@ -266,6 +285,23 @@ function List:CreateRow(parent, index)
         end
     end)
     row.removeButton:SetPoint("LEFT", row.claimButton, "RIGHT", 4, 0)
+
+    -- Edit the reason (and for guilds, numbered matching and faction).
+    -- Sits between Claim and X.
+    row.editButton = CreateFrame("Button", nil, row)
+    row.editButton:SetSize(16, 16)
+    row.editButton:SetPoint("RIGHT", row.removeButton, "LEFT", -4, 0)
+    row.editButton:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    row.editButton:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+    row.editButton:SetScript("OnClick", function()
+        List:ShowAddForm(row.guild or row.ganker)
+    end)
+    row.editButton:SetScript("OnEnter", function(button)
+        GameTooltip:SetOwner(button, "ANCHOR_TOP")
+        GameTooltip:SetText("Edit")
+        GameTooltip:Show()
+    end)
+    row.editButton:SetScript("OnLeave", GameTooltip_Hide)
 
     row:SetScript("OnEnter", ShowRowTooltip)
     row:SetScript("OnLeave", GameTooltip_Hide)
@@ -384,12 +420,14 @@ local function FillGankerRow(row, entry, me)
     end
     row.bountyButton:Show()
     row.claimButton:SetShown(RC.Gankers:CanClaim(ganker.name))
-    row.removeButton:SetShown(RC.Gankers:CanRemove(me, ganker))
+    local canEdit = RC.Gankers:CanRemove(me, ganker)
+    row.removeButton:SetShown(canEdit)
+    row.editButton:SetShown(canEdit)
 end
 
 local function FillGuildRow(row, guild, me)
     row.ganker, row.guild = nil, guild
-    row.name:SetText(RC.GuildLabel(guild))
+    row.name:SetText(FactionIcon(guild.faction, 14) .. RC.GuildLabel(guild))
     row.reports:SetText("")
     -- Guild rows have no bounty, so "Added by" can use that column too
     row.seen:SetWidth(COL_BUTTONS - COL_SEEN - 4)
@@ -397,7 +435,9 @@ local function FillGuildRow(row, guild, me)
     row.bounty:SetText("")
     row.bountyButton:Hide()
     row.claimButton:Hide()
-    row.removeButton:SetShown(RC.Gankers:IsOfficer(me))
+    local officer = RC.Gankers:IsOfficer(me)
+    row.removeButton:SetShown(officer)
+    row.editButton:SetShown(officer)
 end
 
 function List:Refresh()
@@ -500,6 +540,7 @@ function List:CreateAddForm()
             if guild and RC:GetHostileTargetName() then
                 form:SetGuildName(guild)
                 form.realm = realm
+                form:SetFaction(UnitFaction("target") or form.faction)
                 form.error:SetText("")
             else
                 form.error:SetText("Target an enemy player who's in a guild first.")
@@ -532,6 +573,40 @@ function List:CreateAddForm()
     numberedText:ClearAllPoints()
     numberedText:SetPoint("LEFT", form.numbered, "RIGHT", 2, 0)
     form.numberedText = numberedText
+
+    -- Guild mode only: Horde / Alliance crests. Picking one is required.
+    form.factionLabel = form:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    form.factionLabel:SetPoint("TOPLEFT", form.numbered, "BOTTOMLEFT", 2, -16)
+    form.factionLabel:SetText("Faction")
+    form.factionButtons = {}
+    local previous
+    for _, faction in ipairs({ "Horde", "Alliance" }) do
+        local button = CreateFrame("Button", nil, form)
+        button:SetSize(28, 28)
+        if previous then
+            button:SetPoint("LEFT", previous, "RIGHT", 8, 0)
+        else
+            button:SetPoint("LEFT", form.factionLabel, "RIGHT", 10, 0)
+        end
+        button.icon = button:CreateTexture(nil, "ARTWORK")
+        button.icon:SetAllPoints()
+        button.icon:SetTexture(FACTION_ICONS[faction])
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        button:SetScript("OnClick", function()
+            form:SetFaction(faction)
+            form.error:SetText("")
+        end)
+        button:SetScript("OnEnter", function()
+            GameTooltip:SetOwner(button, "ANCHOR_TOP")
+            GameTooltip:SetText(faction)
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", GameTooltip_Hide)
+        form.factionButtons[faction] = button
+        previous = button
+    end
+    form.factionText = form:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    form.factionText:SetPoint("LEFT", previous, "RIGHT", 10, 0)
     form.bounty = FormInput(form, bountyLabel, 90, 7)
     form.bounty:SetNumeric(true)
 
@@ -549,6 +624,7 @@ function List:CreateAddForm()
     local add = SmallButton(form, "Add", 90, function()
         List:SubmitAddForm()
     end)
+    form.submit = add
     add:SetHeight(22)
     add:SetPoint("RIGHT", cancel, "LEFT", -8, 0)
 
@@ -556,7 +632,12 @@ function List:CreateAddForm()
     local allFields = { form.name, form.reason, form.bounty }
     for _, box in ipairs(allFields) do
         box:SetScript("OnTabPressed", function()
-            local fields = form.mode == "guilds" and { form.name, form.reason } or allFields
+            local fields = {}
+            for _, field in ipairs(allFields) do
+                if field:IsShown() and field:IsEnabled() then
+                    table.insert(fields, field)
+                end
+            end
             local index = 1
             for i, field in ipairs(fields) do
                 if field == box then
@@ -574,6 +655,16 @@ function List:CreateAddForm()
         end)
     end
 
+    function form:SetFaction(faction)
+        self.faction = faction
+        for name, button in pairs(self.factionButtons) do
+            local picked = name == faction
+            button.icon:SetDesaturated(not picked)
+            button.icon:SetAlpha(picked and 1 or 0.45)
+        end
+        self.factionText:SetText(faction and (FACTION_COLORS[faction] .. faction .. "|r") or "|cff808080Pick one|r")
+    end
+
     -- "Olympus 2" fills in "Olympus" so the whole numbered family is covered
     function form:SetGuildName(guild)
         local base = guild and RC.GuildBaseName(guild)
@@ -586,7 +677,9 @@ function List:CreateAddForm()
     self.addForm = form
 end
 
-function List:ShowAddForm()
+-- editing: a listed ganker or KOS guild (matching the current tab) to edit
+-- instead of adding a new entry
+function List:ShowAddForm(editing)
     if not self.addForm then
         self:CreateAddForm()
     end
@@ -594,12 +687,32 @@ function List:ShowAddForm()
     local guildMode = self.mode == "guilds"
     form.mode = self.mode
     form.realm = nil
-    form.title:SetText(guildMode and "Add KOS Guild" or "Add Ganker")
+    form.editing = editing
+    if editing then
+        form.title:SetText(guildMode and "Edit KOS Guild" or "Edit Ganker")
+    else
+        form.title:SetText(guildMode and "Add KOS Guild" or "Add Ganker")
+    end
+    form.submit:SetText(editing and "Save" or "Add")
+    form.name:SetEnabled(not editing)
+    form.targetButton:SetShown(not editing)
     form.nameLabel:SetText(guildMode and "Guild name |cff808080(end with * to match all that start with it)|r" or "Name")
     form.bountyLabel:SetShown(not guildMode)
     form.bounty:SetShown(not guildMode)
     form.numbered:SetShown(guildMode)
     form.numbered:SetChecked(true)
+    form.factionLabel:SetShown(guildMode)
+    for _, button in pairs(form.factionButtons) do
+        button:SetShown(guildMode)
+    end
+    form.factionText:SetShown(guildMode)
+    form:SetHeight(guildMode and 290 or 250)
+    form.error:ClearAllPoints()
+    if guildMode then
+        form.error:SetPoint("TOPLEFT", form.factionLabel, "BOTTOMLEFT", 0, -16)
+    else
+        form.error:SetPoint("TOPLEFT", form.bountyLabel, "BOTTOMLEFT", 0, -34)
+    end
 
     local target = RC:GetHostileTargetName()
     if guildMode then
@@ -610,12 +723,40 @@ function List:ShowAddForm()
         target = guild
         form.realm = realm
         form:SetGuildName(guild)
+        -- Your target's faction, else what the list already has for that guild
+        local listed = guild and RC.Gankers:GetGuild(RC.GuildBaseName(guild) or guild)
+        form:SetFaction(target and UnitFaction("target") or (listed and listed.faction))
     else
         form.name:SetText(target and RC.DisplayName(target) or "")
     end
     form.reason:SetText("")
     form.bounty:SetText("")
     form.error:SetText("")
+
+    if editing and not guildMode then
+        -- The name is the entry's key, so it stays. Bounties have their own button.
+        form.name:SetText(RC.DisplayName(editing.name))
+        form.bountyLabel:Hide()
+        form.bounty:Hide()
+        form.reason:SetText(editing.reason or "")
+        form:Show()
+        form.reason:SetFocus()
+        return
+    end
+    if editing then
+        -- The name is the entry's key, so it stays; remove and re-add to rename
+        form.name:SetText(editing.name)
+        form.numberedText:SetText("Also match numbered guilds (" .. editing.name .. " 2, " .. editing.name .. " II...)")
+        form.numbered:SetChecked(editing.numbered == true)
+        form.numbered:SetShown(editing.name:sub(-1) ~= "*")
+        form.realm = editing.realm
+        form.reason:SetText(editing.reason or "")
+        form:SetFaction(editing.faction)
+        form:Show()
+        form.reason:SetFocus()
+        return
+    end
+
     form:Show()
     if target then
         form.reason:SetFocus()
@@ -633,11 +774,21 @@ function List:SubmitAddForm()
             form.name:SetFocus()
             return
         end
-        if not IsInGuild() then
-            form.error:SetText("You need to be in a guild to use the ganker list.")
+        if not form.faction then
+            form.error:SetText("Pick the guild's faction: Horde or Alliance.")
             return
         end
-        RC.Gankers:AddGuild(guild, form.realm, form.reason:GetText(), form.numbered:GetChecked() and true or false)
+        if not IsInGuild() then
+            form.error:SetText("You need to be in a guild to use the KOS list.")
+            return
+        end
+        RC.Gankers:AddGuild(guild, form.realm, form.reason:GetText(), form.numbered:GetChecked() and true or false,
+            form.faction, form.editing ~= nil)
+        form:Hide()
+        return
+    end
+    if form.editing then
+        RC.Gankers:Add(form.editing.name, form.reason:GetText(), true)
         form:Hide()
         return
     end
@@ -648,7 +799,7 @@ function List:SubmitAddForm()
         return
     end
     if not IsInGuild() then
-        form.error:SetText("You need to be in a guild to use the ganker list.")
+        form.error:SetText("You need to be in a guild to use the KOS list.")
         return
     end
     local gold = tonumber(form.bounty:GetText())

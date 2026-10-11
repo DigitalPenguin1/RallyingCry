@@ -79,8 +79,8 @@ function Panel:Create()
     gear:SetScript("OnLeave", GameTooltip_Hide)
 
     local listInfo = {
-        label = "Ganker List",
-        tooltip = "Open the guild's ganker list and KOS guilds.",
+        label = "KOS List",
+        tooltip = "Open the guild's KOS list: gankers and KOS guilds.",
         color = "|cffffd100",
     }
 

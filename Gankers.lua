@@ -139,7 +139,7 @@ end
 -- Wire format
 -- KOS  ~ relay ~ name ~ addedBy ~ reports ~ lastSeen ~ updated ~ removedBy ~ zone ~ reason ~ guild
 -- BNTY ~ relay ~ name ~ poster ~ gold ~ status ~ claimant ~ updated
--- KOSG ~ relay ~ guild ~ realm ~ addedBy ~ updated ~ removedBy ~ reason ~ numbered
+-- KOSG ~ relay ~ guild ~ realm ~ addedBy ~ updated ~ removedBy ~ reason ~ numbered ~ faction
 -- relay is "r" when the record is being passed along in a sync, empty when
 -- the sender made the change themselves.
 ----------------------------------------------------------------------
@@ -152,8 +152,12 @@ end
 
 local function EncodeGuild(g, relay)
     return RC.Pack("KOSG", relay and "r" or "", RC.CleanText(g.name, 30), g.realm or "", g.addedBy,
-        g.updated, g.removedBy or "", RC.CleanText(g.reason, 60), g.numbered and "1" or "")
+        g.updated, g.removedBy or "", RC.CleanText(g.reason, 60), g.numbered and "1" or "",
+        g.faction or "")
 end
+
+-- Faction a KOS guild can be marked with, as UnitFactionGroup names it
+RC.FACTIONS = { Horde = true, Alliance = true }
 
 -- Matches on the guild name alone. Forever has no realms, and elsewhere
 -- guild names rarely clash across connected realms.
@@ -307,7 +311,7 @@ local function RequireGuild()
     if IsInGuild() then
         return true
     end
-    RC:Print(RC.COLORS.ERROR .. "You need to be in a guild to use the ganker list.|r")
+    RC:Print(RC.COLORS.ERROR .. "You need to be in a guild to use the KOS list.|r")
     return false
 end
 
@@ -357,7 +361,8 @@ function Gankers:Sighted(name, guild)
     Publish("KOS", record)
 end
 
-function Gankers:Add(name, reason)
+-- A blank reason keeps the current one, unless replaceReason (editing)
+function Gankers:Add(name, reason, replaceReason)
     name = RC.NormalizeName(name)
     if not name then
         RC:Print("Usage: /rc kos add <name> [reason]")
@@ -368,10 +373,13 @@ function Gankers:Add(name, reason)
     end
     reason = OrNil(reason)
     local current = self:Get(name)
+    if not replaceReason then
+        reason = reason or (current and current.reason)
+    end
     Publish("KOS", {
         name = name,
         addedBy = current and current.addedBy or Me(),
-        reason = reason or (current and current.reason),
+        reason = reason,
         reports = current and current.reports or 0,
         lastSeen = current and current.lastSeen,
         zone = current and current.zone,
@@ -379,14 +387,14 @@ function Gankers:Add(name, reason)
         updated = NextStamp(RC.guild.gankers[name]),
     })
     RC:Print((current and "Updated " or "Added ") .. RC.COLORS.ERROR .. RC.DisplayName(name) ..
-        "|r " .. (current and "on" or "to") .. " the guild ganker list.")
+        "|r " .. (current and "on" or "to") .. " the guild KOS list.")
 end
 
 function Gankers:Remove(name)
     name = RC.NormalizeName(name)
     local current = self:Get(name)
     if not current then
-        RC:Print((name and RC.DisplayName(name) or "That player") .. " isn't on the ganker list.")
+        RC:Print((name and RC.DisplayName(name) or "That player") .. " isn't on the KOS list.")
         return
     end
     if not self:CanRemove(Me(), current) then
@@ -398,7 +406,7 @@ function Gankers:Remove(name)
     record.removedBy = Me()
     record.updated = NextStamp(current)
     Publish("KOS", record)
-    RC:Print("Removed " .. RC.DisplayName(name) .. " from the ganker list.")
+    RC:Print("Removed " .. RC.DisplayName(name) .. " from the KOS list.")
 end
 
 -- Listed (and not removed) KOS guild record, or nil
@@ -410,7 +418,9 @@ function Gankers:GetGuild(name)
 end
 
 -- numbered defaults to on: adding "Olympus" covers Olympus 2, Olympus II, ...
-function Gankers:AddGuild(name, realm, reason, numbered)
+-- faction is "Horde", "Alliance", false to clear it, or nil to keep it.
+-- A blank reason keeps the current one, unless replaceReason (editing).
+function Gankers:AddGuild(name, realm, reason, numbered, faction, replaceReason)
     name = OrNil(RC.CleanText(name, 30))
     if numbered == nil then
         numbered = true
@@ -437,12 +447,16 @@ function Gankers:AddGuild(name, realm, reason, numbered)
     end
     reason = OrNil(reason)
     local current = self:GetGuild(name)
+    if not replaceReason then
+        reason = reason or (current and current.reason)
+    end
     Publish("KOSG", {
         name = current and current.name or name,
         realm = realm or (current and current.realm),
         addedBy = current and current.addedBy or Me(),
-        reason = reason or (current and current.reason),
+        reason = reason,
         numbered = numbered and not IsWildcard(name) or nil,
+        faction = faction == nil and current and current.faction or (RC.FACTIONS[faction] and faction or nil),
         updated = NextStamp(RC.guild.kosGuilds[GuildKey(name)]),
     })
     local covers = ""
@@ -760,7 +774,8 @@ RC.MessageHandlers.BNTY = function(_, sender, relay, name, poster, gold, status,
         RC.DisplayName(record.name))
 end
 
-RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updated, removedBy, reason, numbered)
+RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updated, removedBy, reason, numbered,
+                                    faction)
     local record = {
         name = OrNil(RC.CleanText(name, 30)),
         realm = OrNil(realm),
@@ -769,6 +784,7 @@ RC.MessageHandlers.KOSG = function(_, sender, relay, name, realm, addedBy, updat
         removedBy = RC.NormalizeName(removedBy),
         reason = OrNil(reason),
         numbered = numbered == "1" or nil,
+        faction = RC.FACTIONS[faction] and faction or nil,
     }
     if not (record.name and record.addedBy and record.updated) then
         return

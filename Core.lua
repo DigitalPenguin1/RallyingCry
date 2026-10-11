@@ -8,7 +8,7 @@ local addonName = ...
 RallyingCry = {}
 local RC = RallyingCry
 
-RC.VERSION = "0.5.0"
+RC.VERSION = "0.5.1"
 
 -- Addon message prefix (16 characters max)
 RC.PREFIX = "RallyingCry"
@@ -115,7 +115,7 @@ BINDING_NAME_RALLYINGCRY_HUNT = "Send: Hunt Ganker"
 BINDING_NAME_RALLYINGCRY_CLEAR = "Send: All Clear"
 BINDING_NAME_RALLYINGCRY_WAYPOINT = "Waypoint to last alert"
 BINDING_NAME_RALLYINGCRY_PANEL = "Toggle alert panel"
-BINDING_NAME_RALLYINGCRY_GANKERS = "Toggle ganker list"
+BINDING_NAME_RALLYINGCRY_GANKERS = "Toggle KOS list"
 
 ----------------------------------------------------------------------
 -- Helpers
@@ -652,12 +652,12 @@ local function PrintUsage()
     print("  /rc clear - call off your alert")
     print("  /rc go - waypoint to the last alert")
     print("  /rc log - recent alerts")
-    print("  /rc kos - open the guild ganker list")
+    print("  /rc kos - open the guild KOS list")
     print("  /rc kos add <name> [reason] | /rc kos remove <name>")
     print("  /rc kos guild add <guild> [- reason] | /rc kos guild remove <guild>")
     print("  /rc bounty <name> <gold> - pledge gold on a ganker (0 withdraws)")
     print("  /rc claim <name> - claim the bounties on a ganker you killed")
-    print("  /rc export | /rc import - back up or restore the guild's ganker list (import: officers)")
+    print("  /rc export | /rc import - back up or restore the guild's KOS list (import: officers)")
     print("  /rc settings - open the settings page")
     print("  /rc panel - show/hide the button panel")
     print("  /rc minimap - show/hide the minimap button")

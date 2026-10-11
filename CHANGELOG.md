@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1
+
+- Edit button (the gear on each row) on the KOS list. Gankers: change the reason (whoever added them, or an officer). KOS guilds: change the reason, numbered matching, or faction (officers)
+- The Ganker List is now the KOS List: the panel button, window title, minimap tooltip, keybinding, and settings. The Guilds tab still says KOS Guilds
+- KOS guilds can be marked Horde or Alliance. The Add Guild form asks for the faction (filled in from your target), and the list and tooltip show the faction crest. The faction syncs with the guild, and older versions just ignore it
+
 ## 0.5.0
 
 - The minimap button and addon list use the Rallying Cry icon instead of Battle Shout

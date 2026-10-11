@@ -107,7 +107,7 @@ function MinimapButton:ShowTooltip(owner, draggable)
     GameTooltip:SetOwner(owner, "ANCHOR_LEFT")
     GameTooltip:SetText("Rallying Cry", RC.Theme.Color(RC.Theme.GOLD_LIGHT))
     GameTooltip:AddLine("Left-click: toggle alert panel", 0.8, 0.8, 0.8)
-    GameTooltip:AddLine("Shift-click: ganker list", 0.8, 0.8, 0.8)
+    GameTooltip:AddLine("Shift-click: KOS list", 0.8, 0.8, 0.8)
     GameTooltip:AddLine("Right-click: settings", 0.8, 0.8, 0.8)
     if draggable then
         GameTooltip:AddLine("Drag: move", 0.8, 0.8, 0.8)

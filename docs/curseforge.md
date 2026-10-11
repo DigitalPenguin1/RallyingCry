@@ -4,6 +4,9 @@ field and everything under "Description" into the Description editor
 (switch it to Markdown first). Not shipped in the addon zip (.pkgmeta
 ignores docs/).
 
+Logo: upload docs/images/logo.png (400x400, built from the
+Ability_Warrior_RallyingCry icon).
+
 Images point at raw GitHub URLs, so they only load while the repo is
 public. Otherwise upload them under the project's Images tab and swap the
 links.

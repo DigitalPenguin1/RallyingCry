@@ -2,6 +2,7 @@
 
 ## 0.5.0
 
+- The minimap button and addon list use the Rallying Cry icon instead of Battle Shout
 - Ganker list: the window title says KOS Guilds on the Guilds tab
 - Ganker list: targeting or mousing over a listed ganker updates their Last seen time and zone for the guild (at most once every 5 minutes per ganker). Before, only alerts did, so gankers added by hand said "never" forever. Reports still only count alerts
 - Ganker list: paid bounties show on the tooltip (who paid whom, how much, when), and the Bounty column says Paid once nothing is left open. Before, a paid bounty just disappeared

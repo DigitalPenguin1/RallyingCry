@@ -8,7 +8,7 @@ local RC = RallyingCry
 local MinimapButton = {}
 RC.MinimapButton = MinimapButton
 
-local ICON = "Interface\\Icons\\Ability_Warrior_BattleShout"
+local ICON = "Interface\\Icons\\Ability_Warrior_RallyingCry"
 local DEFAULT_ANGLE = 200
 
 local function PlaceAtAngle(button, degrees)

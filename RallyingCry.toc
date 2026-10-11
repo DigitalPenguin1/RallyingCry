@@ -4,7 +4,7 @@
 ## Author: Relyk
 ## Version: 0.5.0
 ## SavedVariables: RallyingCryDB
-## IconTexture: Interface\Icons\Ability_Warrior_BattleShout
+## IconTexture: Interface\Icons\Ability_Warrior_RallyingCry
 ## AddonCompartmentFunc: RallyingCry_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: RallyingCry_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: RallyingCry_OnAddonCompartmentLeave

@@ -137,7 +137,7 @@ end
 
 ----------------------------------------------------------------------
 -- Wire format
--- KOS  ~ relay ~ name ~ addedBy ~ reports ~ lastSeen ~ updated ~ removedBy ~ zone ~ reason ~ guild
+-- KOS  ~ relay ~ name ~ addedBy ~ reports ~ lastSeen ~ updated ~ removedBy ~ zone ~ reason ~ guild ~ class
 -- BNTY ~ relay ~ name ~ poster ~ gold ~ status ~ claimant ~ updated
 -- KOSG ~ relay ~ guild ~ realm ~ addedBy ~ updated ~ removedBy ~ reason ~ numbered ~ faction
 -- relay is "r" when the record is being passed along in a sync, empty when
@@ -147,7 +147,32 @@ end
 local function EncodeGanker(g, relay)
     return RC.Pack("KOS", relay and "r" or "", g.name, g.addedBy, g.reports or 0, g.lastSeen or "",
         g.updated, g.removedBy or "", RC.CleanText(g.zone, 40), RC.CleanText(g.reason, 50),
-        RC.CleanText(g.guild, 30))
+        RC.CleanText(g.guild, 30), g.class or "")
+end
+
+-- Class ID (1 Warrior ... 11 Druid) of a unit, or nil if unknown or hidden
+function RC.UnitClassID(unit)
+    local ok, _, _, classID = pcall(UnitClass, unit)
+    classID = ok and RC.Readable(classID)
+    return type(classID) == "number" and classID or nil
+end
+
+-- Class file name ("WARRIOR") for a class ID, or nil if the game doesn't know it
+function RC.ClassFile(classID)
+    if not classID or not GetClassInfo then
+        return nil
+    end
+    local ok, _, classFile = pcall(GetClassInfo, classID)
+    return ok and classFile or nil
+end
+
+-- Class of a player you have targeted or moused over right now
+local function SeenClass(name)
+    for _, unit in ipairs({ "target", "mouseover" }) do
+        if RC:GetHostileUnitName(unit) == name then
+            return RC.UnitClassID(unit)
+        end
+    end
 end
 
 local function EncodeGuild(g, relay)
@@ -338,18 +363,21 @@ function Gankers:Report(name, zone, guild)
         lastSeen = Now(),
         zone = zone,
         guild = guild or (current and current.guild),
+        class = SeenClass(name) or (current and current.class),
         updated = NextStamp(RC.guild.gankers[name]),
     })
 end
 
 -- You targeted or moused over a listed ganker: update when and where they
--- were last seen. Unlike Report, this doesn't count as a report.
-function Gankers:Sighted(name, guild)
+-- were last seen. Unlike Report, this doesn't count as a report. Learning
+-- their class skips the wait, so the icon shows up right away.
+function Gankers:Sighted(name, guild, class)
     local current = self:Get(name)
     if not current or not IsInGuild() then
         return
     end
-    if current.lastSeen and Now() - current.lastSeen < SIGHTING_INTERVAL then
+    local newClass = class and class ~= current.class
+    if not newClass and current.lastSeen and Now() - current.lastSeen < SIGHTING_INTERVAL then
         return
     end
     local _, _, _, zone, subzone = RC:GetPlayerLocation()
@@ -357,6 +385,7 @@ function Gankers:Sighted(name, guild)
     record.lastSeen = Now()
     record.zone = zone and (subzone and (subzone .. ", " .. zone) or zone) or current.zone
     record.guild = guild or current.guild
+    record.class = class or current.class
     record.updated = NextStamp(current)
     Publish("KOS", record)
 end
@@ -384,6 +413,7 @@ function Gankers:Add(name, reason, replaceReason)
         lastSeen = current and current.lastSeen,
         zone = current and current.zone,
         guild = current and current.guild,
+        class = SeenClass(name) or (current and current.class),
         updated = NextStamp(RC.guild.gankers[name]),
     })
     RC:Print((current and "Updated " or "Added ") .. RC.COLORS.ERROR .. RC.DisplayName(name) ..
@@ -720,7 +750,9 @@ end
 -- Receiving
 ----------------------------------------------------------------------
 
-RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, lastSeen, updated, removedBy, zone, reason, guild)
+RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, lastSeen, updated, removedBy, zone, reason, guild,
+                                   class)
+    class = tonumber(class)
     local record = {
         name = RC.NormalizeName(name),
         addedBy = RC.NormalizeName(addedBy),
@@ -731,6 +763,7 @@ RC.MessageHandlers.KOS = function(_, sender, relay, name, addedBy, reports, last
         zone = OrNil(zone),
         reason = OrNil(reason),
         guild = OrNil(guild),
+        class = RC.ClassFile(class) and class or nil,
     }
     if not (record.name and record.addedBy and record.updated) then
         return
@@ -1075,7 +1108,7 @@ function Gankers:CheckUnit(unit)
     local ganker = self:Get(name)
     -- Last seen updates even with warnings turned off
     if ganker then
-        self:Sighted(name, guild)
+        self:Sighted(name, guild, RC.UnitClassID(unit))
     end
     if not RC.db.kosWarn then
         return

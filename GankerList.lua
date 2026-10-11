@@ -25,6 +25,39 @@ local REMOVE_GUILD_POPUP = "RALLYINGCRY_CONFIRM_REMOVE_GUILD"
 local FACTION_ICONS = { Horde = 2175464, Alliance = 2175463 }
 local FACTION_COLORS = { Horde = "|cffff4040", Alliance = "|cff4a9eff" }
 
+-- Class icons (classicon_warrior, ...) by file ID. Any other class falls
+-- back to the file name, which isn't case sensitive.
+local CLASS_ICONS = {
+    WARRIOR = 626008,
+    PALADIN = 626003,
+    HUNTER = 626000,
+    ROGUE = 626005,
+    PRIEST = 626004,
+    SHAMAN = 626006,
+    MAGE = 626001,
+    WARLOCK = 626007,
+    DRUID = 625999,
+}
+
+local function ClassIcon(classID, size)
+    local classFile = RC.ClassFile(classID)
+    if not classFile then
+        return ""
+    end
+    local icon = CLASS_ICONS[classFile] or ("Interface\\Icons\\ClassIcon_" .. classFile)
+    return "|T" .. icon .. ":" .. size .. ":" .. size .. "|t "
+end
+
+local function ClassName(classID)
+    local classFile = RC.ClassFile(classID)
+    if not classFile then
+        return nil
+    end
+    local name = GetClassInfo(classID)
+    local color = RAID_CLASS_COLORS and RAID_CLASS_COLORS[classFile]
+    return color and color.colorStr and ("|c" .. color.colorStr .. name .. "|r") or name
+end
+
 -- Row tooltips start this far right of the row, clear of the window's edge
 -- and close button
 local TOOLTIP_OFFSET = PADDING + 4
@@ -212,7 +245,11 @@ local function ShowRowTooltip(row)
         return
     end
     GameTooltip:SetOwner(row, "ANCHOR_RIGHT", TOOLTIP_OFFSET, 0)
-    GameTooltip:SetText(RC.DisplayName(ganker.name), 1, 0.2, 0.2)
+    GameTooltip:SetText(ClassIcon(ganker.class, 22) .. RC.DisplayName(ganker.name), 1, 0.2, 0.2)
+    local class = ClassName(ganker.class)
+    if class then
+        GameTooltip:AddLine(class)
+    end
     if ganker.guild then
         local kos = RC.Gankers:MatchGuild(ganker.guild) and " |cffff3333(KOS guild)|r" or ""
         GameTooltip:AddLine("<" .. ganker.guild .. ">" .. kos, 1, 1, 1)
@@ -414,7 +451,7 @@ local function FillGankerRow(row, entry, me)
     local ganker = entry.ganker
     row.ganker, row.guild = ganker, nil
     row.name:SetWidth(COL_REPORTS - 8)
-    row.name:SetText(RC.DisplayName(ganker.name))
+    row.name:SetText(ClassIcon(ganker.class, 20) .. RC.DisplayName(ganker.name))
     row.reports:SetText(ganker.reports)
     row.seen:SetWidth(COL_BOUNTY - COL_SEEN - 4)
     row.seen:SetText(TimeAgo(ganker.lastSeen))

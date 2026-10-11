@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.5.2
 
+- Gankers show a class icon on the KOS list, and their class in the tooltip. The class is learned when a guildmate targets or mouses over them, sends an alert with them targeted, or adds them with Use Target, and it syncs to the guild. Older versions ignore it
 - KOS guild faction crests are bigger, and guild names get more room before they're cut off
 - KOS list tooltips open just outside the window instead of covering its close button
 

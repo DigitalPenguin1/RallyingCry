@@ -2,7 +2,7 @@
 ## Title: |cffffd100Rallying Cry|r
 ## Notes: Call your guild for help when you're ganked, find world PvP, or hunt a ganker down
 ## Author: Relyk
-## Version: 0.5.1
+## Version: 0.5.2
 ## SavedVariables: RallyingCryDB
 ## X-Curse-Project-ID: 1738269
 ## IconTexture: Interface\Icons\Ability_Warrior_RallyingCry

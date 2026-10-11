@@ -26,4 +26,8 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Name the zip and the CurseForge file after the version alone. By
+      # default the packager appends the game flavor ("-forever").
       - uses: BigWigsMods/packager@v2
+        with:
+          args: -n "{package-name}-{project-version}:{project-version}"

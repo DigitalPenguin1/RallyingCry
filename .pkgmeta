@@ -11,5 +11,3 @@ ignore:
   - docs
 
 manual-changelog: CHANGELOG.md
-
-license-output: LICENSE.txt

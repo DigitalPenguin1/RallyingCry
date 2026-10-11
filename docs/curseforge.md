@@ -42,11 +42,12 @@ Guildmates get a banner, a sound, and an **Accept / Decline** window. Accept set
 
 - Anyone named in a Ganked! or Hunt alert is added to the guild's list automatically, or add them by hand
 - **Reports** and **Last seen**: see how often a ganker has been called out, and when and where a guildmate last ran into them
+- **Class icons** next to each ganker: pick the class when you add them, or it's filled in when a guildmate targets them
 - **Warnings** when you target or mouse over a listed ganker
 - **Bounties**: pledge gold on a ganker. The hunter claims it, the poster confirms and mails the gold, and paid bounties stay on record
 - **KOS guilds**: officers can put a whole guild on KOS, including its numbered spin-offs (Olympus 2, Olympus II) or every guild starting with a name
 - **Faction crests**: each KOS guild is marked Horde or Alliance, with its crest next to the name
-- **Edit** any entry with the gear on its row: change a ganker's reason, or a KOS guild's reason, matching, or faction
+- **Edit** any entry with the gear on its row: change a ganker's reason or class, or a KOS guild's reason, matching, or faction
 
 ![KOS guilds](https://raw.githubusercontent.com/DigitalPenguin1/RallyingCry/main/docs/images/kos-guilds.png)
 

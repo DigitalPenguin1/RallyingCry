@@ -12,7 +12,7 @@ Alerts go over the hidden guild addon channel. Nobody outside your guild sees th
 
 ## Quick Start
 
-1. Install the addon and join a guild. Your guildmates need Rallying Cry too
+1. [Install the addon](#install) and join a guild. Your guildmates need Rallying Cry too
 2. Click the **Rallying Cry minimap button** to open the alert panel, and press **Ganked!** when you're in trouble
 3. When a guildmate calls for help, click **Accept** to join their group and get a waypoint to them
 
@@ -168,7 +168,9 @@ For a small guild, keep a backup. On the **Sync** page, click **Export Backup** 
 
 ## Install
 
-Unzip into `World of Warcraft/_classic_beta_/Interface/AddOns/` so you get `AddOns/RallyingCry/RallyingCry.toc`, then restart the game. `_classic_beta_` is the beta folder; after launch, use the AddOns folder inside your Forever install.
+**CurseForge app (easiest):** search for **Rallying Cry** under World of Warcraft, or open the [CurseForge page](https://www.curseforge.com/wow/addons/rallying-cry) and click Install. The app keeps it updated. Addon managers that read from CurseForge, like WowUp, can install it too.
+
+**By hand:** download the zip from [CurseForge](https://www.curseforge.com/wow/addons/rallying-cry/files) or [GitHub Releases](https://github.com/DigitalPenguin1/RallyingCry/releases), and unzip it into your Forever AddOns folder so you get `AddOns/RallyingCry/RallyingCry.toc`. During the beta that's `World of Warcraft/_classic_beta_/Interface/AddOns/`; after launch, use the AddOns folder inside your Forever install. Restart the game after installing.
 
 ## Troubleshooting & Support
 

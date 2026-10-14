@@ -88,6 +88,7 @@ Open the list from the **KOS List** button on the panel, Shift-click the minimap
 - **Sync page**: Options > AddOns > Rallying Cry > Sync shows how many gankers, KOS guilds, and bounties you have, a **Sync Now** button, and a log of who sent you updates, what was in them, who you sent updates to, and any changes that were ignored
 - **Mute by type**: `/rc mute wpvp` keeps an alert type in chat but drops the window, banner, and sound
 - **Sounds**: Ganked! and Hunt Ganker play the zeppelin horn, World PvP plays the ready check, and the ganker warning plays the raid warning. Each can be turned off in settings under **Sounds**, or all at once with `/rc sound`
+- **Guild chat posts**: off by default. Turn on **Also post in guild chat** in settings, or `/rc chat`, and your alerts also go to guild chat with your zone and coordinates, so guildmates without the addon can come help. At most every 10 minutes the post ends with "(Get Rallying Cry on CurseForge for alerts)". Posts are limited to one every 30 seconds, and All Clear is posted only if the alert it calls off was
 - **Spam guard**: 10 second cooldown between your alerts, and repeat alerts from the same person get dropped. All Clear skips the cooldown but only works while you have an alert out
 
 <p align="center"><img src="docs/images/sync.png" alt="Sync page in settings with counts, Sync Now and Clear Log buttons, and the sync log" width="640"></p>
@@ -124,6 +125,7 @@ Forever characters have a first name and a surname. Where a command takes a name
 /rc invite              toggle auto-inviting guildmates who accept
 /rc raid                toggle turning a full party into a raid
 /rc mute <type>         silence gank, wpvp, or hunt
+/rc chat                toggle posting your alerts in guild chat
 /rc version             addon and protocol version
 /rc debug               debug output
 ```

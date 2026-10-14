@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4
+
+- New option, off by default: **Also post in guild chat** (settings, or `/rc chat`). Your alerts also go to guild chat with your zone and coordinates, so guildmates without the addon see them. Every 10 minutes at most, the post adds "(Get Rallying Cry on CurseForge for alerts)". One post every 30 seconds at most, and All Clear is only posted if the alert it calls off was
+
 ## 0.5.3
 
 - Add Ganker and Edit Ganker have a class picker. It's optional, and Use Target fills it in

@@ -77,6 +77,13 @@ function Options:Register()
         end
     end
 
+    AddHeader(layout, "Sending Alerts")
+    AddCheckbox(category, "guildChat", "Also post in guild chat",
+        "Post your alerts in guild chat with your zone and coordinates, so guildmates without the addon see them too. Every 10 minutes or so the post mentions where to get Rallying Cry. At most one post every 30 seconds.",
+        false,
+        function() return RC.db.guildChat end,
+        function(value) RC.db.guildChat = value end)
+
     AddHeader(layout, "When Guildmates Answer Your Alert")
     AddDBCheckbox(category, "autoInvite", "Auto-invite",
         "Invite guildmates to your group when they accept your alert.")

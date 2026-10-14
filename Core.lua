@@ -1,14 +1,14 @@
 -- Rallying Cry - Core
 -- Saved settings, the guild message protocol, sending alerts, and slash commands.
 -- Every alert goes over the hidden GUILD addon channel, so only guildmates
--- running Rallying Cry ever see it.
+-- running Rallying Cry see it, unless the sender turns on guild chat posts.
 
 local addonName = ...
 
 RallyingCry = {}
 local RC = RallyingCry
 
-RC.VERSION = "0.5.3"
+RC.VERSION = "0.5.4"
 
 -- Addon message prefix (16 characters max)
 RC.PREFIX = "RallyingCry"
@@ -84,10 +84,18 @@ local DEFAULTS = {
     guilds = {},
     kosWarn = true,
     kosAutoAdd = true,
+    -- Also post your alerts in guild chat, for guildmates without the addon
+    guildChat = false,
 }
 
 -- Seconds between alerts from you, so one button mash doesn't spam the guild
 local SEND_COOLDOWN = 10
+
+-- Seconds between guild chat posts, so a run of alerts doesn't flood guild chat
+local CHAT_COOLDOWN = 30
+
+-- Seconds between "get the addon" lines on those posts
+local PLUG_INTERVAL = 600
 
 -- How long your alert stays active: guildmates can answer it, and you can
 -- call it off with All Clear
@@ -398,9 +406,86 @@ function RC:SendGuild(text)
     return false, "send failed (" .. tostring(result) .. ")"
 end
 
+-- Posts a plain guild chat line. Returns true on success, or false plus a reason.
+function RC:SendGuildChat(text)
+    if C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() then
+        return false, "the game is blocking chat right now"
+    end
+    local send = C_ChatInfo.SendChatMessage or SendChatMessage
+    local ok, err = pcall(send, text, "GUILD")
+    if not ok then
+        return false, tostring(err)
+    end
+    return true
+end
+
 ----------------------------------------------------------------------
 -- Sending
 ----------------------------------------------------------------------
+
+-- Guild chat version of an alert, for guildmates without the addon:
+-- "[Rallying Cry] Ganked! Docks, Stranglethorn Vale (42.1, 31.7) - Target: X - note"
+local function ChatLine(alert)
+    local text
+    if alert.type == "CLEAR" then
+        text = "[Rallying Cry] All Clear, I'm safe now"
+    else
+        local where = alert.subzone and (alert.subzone .. ", " .. alert.zone) or alert.zone
+        if alert.x and alert.y then
+            where = where .. string.format(" (%.1f, %.1f)", alert.x * 100, alert.y * 100)
+        end
+        text = "[Rallying Cry] " .. RC.ALERTS[alert.type].label .. " " .. where
+    end
+    if alert.target then
+        text = text .. " - Target: " .. RC.DisplayName(alert.target)
+    end
+    if alert.note and alert.note ~= "" then
+        text = text .. " - " .. alert.note
+    end
+    return text
+end
+
+-- Mirrors an alert to guild chat when guildChat is on. All Clear only goes
+-- out if the alert it calls off was posted.
+function RC:PostAlertToChat(alert)
+    if not self.db.guildChat then
+        return
+    end
+    local now = GetTime()
+    if alert.type == "CLEAR" then
+        if not self.chatAlertPosted then
+            return
+        end
+    elseif self.lastChatAt and now - self.lastChatAt < CHAT_COOLDOWN then
+        self:Debug("guild chat post skipped, cooldown")
+        return
+    end
+
+    local text = ChatLine(alert)
+    if alert.type ~= "CLEAR" and (not self.lastPlugAt or now - self.lastPlugAt >= PLUG_INTERVAL) then
+        local plug = " (Get Rallying Cry on CurseForge for alerts)"
+        -- Guild chat drops lines over 255 bytes, so the plug yields to a long note
+        if #text + #plug <= 255 then
+            text = text .. plug
+            self.lastPlugAt = now
+        end
+    end
+    if #text > 255 then
+        text = TrimPartialUTF8(text:sub(1, 255))
+    end
+
+    local ok, reason = self:SendGuildChat(text)
+    if not ok then
+        self:Print(RC.COLORS.WARNING .. "Couldn't post your alert in guild chat: " .. reason .. "|r")
+        return
+    end
+    if alert.type == "CLEAR" then
+        self.chatAlertPosted = false
+    else
+        self.lastChatAt = now
+        self.chatAlertPosted = true
+    end
+end
 
 function RC:HasActiveAlert()
     return self.activeAlert ~= nil and GetTime() - self.activeAlert.sentAt <= RC.ACTIVE_ALERT_WINDOW
@@ -468,6 +553,7 @@ function RC:SendAlert(alertType, note)
     end
     self:Print("Sent " .. info.color .. info.label .. "|r to your guild" ..
         (target and (" (target: " .. RC.DisplayName(target) .. ")") or "") .. ".")
+    self:PostAlertToChat(alert)
 
     if target and self.db.kosAutoAdd and (alertType == "HELP" or alertType == "HUNT") then
         self.Gankers:Report(target, subzone and (subzone .. ", " .. zone) or zone, targetGuild)
@@ -666,6 +752,7 @@ local function PrintUsage()
     print("  /rc invite - toggle auto-inviting guildmates who accept your alert")
     print("  /rc raid - toggle turning your party into a raid when it fills up")
     print("  /rc mute <gank|wpvp|hunt> - silence one alert type")
+    print("  /rc chat - toggle also posting your alerts in guild chat")
 end
 
 SLASH_RALLYINGCRY1 = "/rc"
@@ -737,6 +824,9 @@ SlashCmdList["RALLYINGCRY"] = function(input)
     elseif cmd == "raid" then
         RC.db.autoRaid = not RC.db.autoRaid
         RC:Print("Convert to raid when your party is full " .. OnOff(RC.db.autoRaid))
+    elseif cmd == "chat" then
+        RC.db.guildChat = not RC.db.guildChat
+        RC:Print("Post your alerts in guild chat " .. OnOff(RC.db.guildChat))
     elseif cmd == "mute" then
         local alertType = SEND_COMMANDS[rest:lower()]
         if not alertType or alertType == "CLEAR" then

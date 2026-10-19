@@ -315,8 +315,7 @@ function SyncLog:CreateBackupWindow()
     frame.title:SetPoint("TOPLEFT", 16, -14)
     frame.title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
 
-    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-    close:SetPoint("TOPRIGHT", 0, 0)
+    RC.Theme.CreateCloseButton(frame)
 
     frame.help = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     frame.help:SetPoint("TOPLEFT", frame.title, "BOTTOMLEFT", 0, -8)

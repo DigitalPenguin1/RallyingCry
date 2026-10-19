@@ -11,7 +11,10 @@ local ROWS = 10
 local ROW_HEIGHT = 24
 local WIDTH = 560
 local PADDING = 12
-local HEADER_TOP = 40
+local HEADER_TOP = 72
+-- Banner across the top: faction crest, guild name, list name
+local BANNER_HEIGHT = 58
+local CREST_SIZE = 50
 
 -- Column x offsets inside a row
 local COL_NAME, COL_REPORTS, COL_SEEN, COL_BOUNTY, COL_BUTTONS = 0, 150, 205, 310, 380
@@ -21,8 +24,7 @@ local CLAIM_POPUP = "RALLYINGCRY_CONFIRM_CLAIM"
 local REMOVE_POPUP = "RALLYINGCRY_CONFIRM_REMOVE"
 local REMOVE_GUILD_POPUP = "RALLYINGCRY_CONFIRM_REMOVE_GUILD"
 
--- Round faction crests (ui_hordeicon-round, ui_allianceicon-round)
-local FACTION_ICONS = { Horde = 2175464, Alliance = 2175463 }
+local FACTION_ICONS = RC.Theme.FACTION_CRESTS
 local FACTION_COLORS = { Horde = "|cffff4040", Alliance = "|cff4a9eff" }
 
 -- Class icons (classicon_warrior, ...) by file ID. Any other class falls
@@ -375,14 +377,37 @@ function List:Create()
     -- Close with Escape
     table.insert(UISpecialFrames, "RallyingCryGankerList")
 
-    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", PADDING, -12)
+    -- Faction-tinted band behind the banner, with a gold rule under it
+    local band = frame:CreateTexture(nil, "BACKGROUND", nil, 1)
+    band:SetPoint("TOPLEFT", 4, -4)
+    band:SetPoint("TOPRIGHT", -4, -4)
+    band:SetHeight(BANNER_HEIGHT)
+    self.band = band
+
+    local rule = frame:CreateTexture(nil, "ARTWORK")
+    rule:SetPoint("TOPLEFT", band, "BOTTOMLEFT", 0, 0)
+    rule:SetPoint("TOPRIGHT", band, "BOTTOMRIGHT", 0, 0)
+    rule:SetHeight(1)
+    rule:SetColorTexture(RC.Theme.Color(RC.Theme.GOLD))
+
+    local crest = RC.Theme.CreateGuildCrest(frame, CREST_SIZE)
+    crest:SetPoint("LEFT", band, "LEFT", PADDING - 4, 0)
+    self.crest = crest
+
+    local guildName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    guildName:SetPoint("BOTTOMLEFT", crest, "RIGHT", 10, 1)
+    guildName:SetPoint("RIGHT", frame, "RIGHT", -200, 0)
+    guildName:SetJustifyH("LEFT")
+    guildName:SetWordWrap(false)
+    guildName:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
+    self.guildName = guildName
+
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    title:SetPoint("TOPLEFT", crest, "RIGHT", 11, -3)
     title:SetText(MODES.gankers.title)
-    title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
     self.title = title
 
-    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-    close:SetPoint("TOPRIGHT", 0, 0)
+    RC.Theme.CreateCloseButton(frame)
 
     -- Gankers | Guilds toggle
     self.tabs = {}
@@ -390,7 +415,7 @@ function List:Create()
         List:SetMode("guilds")
     end)
     self.tabs.guilds:SetHeight(20)
-    self.tabs.guilds:SetPoint("TOPRIGHT", -36, -10)
+    self.tabs.guilds:SetPoint("RIGHT", band, "RIGHT", -32, 0)
     self.tabs.gankers = SmallButton(frame, "Gankers", 70, function()
         List:SetMode("gankers")
     end)
@@ -490,6 +515,20 @@ local function FillGuildRow(row, guild, me)
     row.editButton:SetShown(officer)
 end
 
+-- Show the player's guild and faction in the banner. Without a guild the
+-- banner falls back to the addon's name and a plain band.
+function List:RefreshBanner()
+    local faction = UnitFaction("player")
+    local tint = faction and RC.Theme.FACTION[faction]
+    if tint then
+        self.band:SetColorTexture(RC.Theme.Color(tint, 0.35))
+    else
+        self.band:SetColorTexture(RC.Theme.Color(RC.Theme.BRONZE, 0.6))
+    end
+    self.guildName:SetText(RC.guildName or "Rallying Cry")
+    RC.Theme.RefreshGuildCrest(self.crest, faction)
+end
+
 function List:Refresh()
     if not (self.frame and self.frame:IsShown()) then
         return
@@ -514,6 +553,7 @@ function List:Refresh()
     end
 
     self.title:SetText(MODES[self.mode].title)
+    self:RefreshBanner()
 
     local guildMode = self.mode == "guilds"
     local entries = guildMode and RC.Gankers:SortedGuilds() or RC.Gankers:Sorted()

@@ -8,7 +8,7 @@ local addonName = ...
 RallyingCry = {}
 local RC = RallyingCry
 
-RC.VERSION = "0.5.4"
+RC.VERSION = "0.5.5"
 
 -- Addon message prefix (16 characters max)
 RC.PREFIX = "RallyingCry"
@@ -710,6 +710,8 @@ events:SetScript("OnEvent", function(_, event, ...)
         RC:FlushPendingInvites()
     elseif event == "PLAYER_GUILD_UPDATE" or event == "GUILD_ROSTER_UPDATE" then
         RC:SelectGuildData()
+        -- The guild name and tabard can load after login
+        RC.Panel:RefreshGuild()
     end
 end)
 

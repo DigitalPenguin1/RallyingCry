@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.5
+
+- The KOS list has a banner across the top with your guild's name and tabard (the faction crest if the guild hasn't designed one), on a red or blue band for your faction
+- The button panel shows your guild's name at the bottom
+- Gold close buttons that match the windows replace the red ones, and sit inside the corner instead of hanging off it
+
 ## 0.5.4
 
 - New option, off by default: **Also post in guild chat** (settings, or `/rc chat`). Your alerts also go to guild chat with your zone and coordinates, so guildmates without the addon see them. Every 10 minutes at most, the post adds "(Get Rallying Cry on CurseForge for alerts)". One post every 30 seconds at most, and All Clear is only posted if the alert it calls off was

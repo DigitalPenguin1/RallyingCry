@@ -12,6 +12,8 @@ local BUTTON_HEIGHT = 22
 local BUTTON_GAP = 4
 local PADDING = 10
 local TITLE_HEIGHT = 20
+-- Guild name under the buttons, set off by a gold rule
+local FOOTER_HEIGHT = 24
 
 -- Buttons top to bottom. "LIST" opens the ganker list; the rest send alerts.
 local PANEL_ORDER = { "HELP", "WPVP", "HUNT", "LIST", "CLEAR" }
@@ -39,7 +41,7 @@ function Panel:Create()
     local count = #PANEL_ORDER
     local frame = CreateFrame("Frame", "RallyingCryPanel", UIParent, "BackdropTemplate")
     frame:SetSize(BUTTON_WIDTH + PADDING * 2,
-        TITLE_HEIGHT + PADDING + count * BUTTON_HEIGHT + (count - 1) * BUTTON_GAP + PADDING)
+        TITLE_HEIGHT + PADDING + count * BUTTON_HEIGHT + (count - 1) * BUTTON_GAP + FOOTER_HEIGHT + PADDING)
     RC.Theme.SkinWindow(frame)
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
@@ -56,16 +58,13 @@ function Panel:Create()
     title:SetText("Rallying Cry")
     title:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
 
-    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-    close:SetSize(22, 22)
-    close:SetPoint("TOPRIGHT", 0, 0)
-    close:SetScript("OnClick", function()
+    local close = RC.Theme.CreateCloseButton(frame, function()
         Panel:Hide()
     end)
 
     local gear = CreateFrame("Button", nil, frame)
     gear:SetSize(14, 14)
-    gear:SetPoint("RIGHT", close, "LEFT", 0, 0)
+    gear:SetPoint("RIGHT", close, "LEFT", -2, 0)
     gear:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
     gear:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
     gear:SetScript("OnClick", function()
@@ -113,9 +112,31 @@ function Panel:Create()
         previous = button
     end
 
+    local rule = frame:CreateTexture(nil, "ARTWORK")
+    rule:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 8, -6)
+    rule:SetPoint("TOPRIGHT", previous, "BOTTOMRIGHT", -8, -6)
+    rule:SetHeight(1)
+    rule:SetColorTexture(RC.Theme.Color(RC.Theme.GOLD, 0.6))
+
+    -- Same font as the title, so the name echoes it at the bottom
+    local guildName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    guildName:SetPoint("TOP", rule, "BOTTOM", 0, -4)
+    guildName:SetWidth(BUTTON_WIDTH)
+    guildName:SetWordWrap(false)
+    guildName:SetTextColor(RC.Theme.Color(RC.Theme.GOLD_LIGHT))
+    self.guildName = guildName
+
     RestorePosition(frame)
     self.frame = frame
+    self:RefreshGuild()
     frame:SetShown(RC.db.showPanel)
+end
+
+function Panel:RefreshGuild()
+    if not self.frame then
+        return
+    end
+    self.guildName:SetText(RC.guildName or "|cff808080No guild|r")
 end
 
 function Panel:Show()

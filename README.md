@@ -54,7 +54,7 @@ The window closes on its own after 60 seconds, or when the sender calls All Clea
 
 The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the same list, and it catches you up on anything you missed when you log in.
 
-<p align="center"><img src="docs/images/ganker-list.png" alt="KOS List showing a ganker with a 3 gold bounty" width="560"></p>
+<p align="center"><img src="docs/images/ganker-list.png" alt="KOS List with the guild banner, showing a ganker with a 10 gold bounty" width="560"></p>
 
 - **Adding**: anyone named in your Ganked! or Hunt alert goes on the list automatically, and repeat reports bump their count and last-seen zone. You can also click **Add Ganker**, which opens a form for the name (or Use Target), an optional reason, and an optional bounty, or type `/rc kos add First Surname reason`
 - **Editing and removing**: only the person who added them, or an officer, can click the gear to change the reason or the X to take someone off. Officers are any rank with the guild's **Remove Member** permission
@@ -67,7 +67,7 @@ The guild keeps one shared list of gankers. Anyone running Rallying Cry sees the
 - **Faction crests**: the Add Guild form asks whether the guild is Horde or Alliance (Use Target fills it in), and the list shows its crest next to the name
 - **Editing**: officers can click the gear on a KOS guild's row to change its reason, numbered matching, or faction. Guilds added before crests existed have no faction until someone edits them. To rename a guild, remove it and add it again
 
-<p align="center"><img src="docs/images/kos-guilds.png" alt="KOS List switched to Guilds, showing Olympus on KOS" width="560"></p>
+<p align="center"><img src="docs/images/kos-guilds.png" alt="KOS List switched to Guilds, with the guild tabard and name in the banner" width="560"></p>
 
 The addon can't hold or move gold. A bounty is a pledge, and the poster pays it by mail.
 
